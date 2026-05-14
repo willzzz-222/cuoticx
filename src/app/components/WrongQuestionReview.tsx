@@ -617,6 +617,18 @@ function QuestionPanel({
               </li>
             </ol>
           </div>
+          {(isSingleChoiceType(question.type) || isMultiChoiceType(question.type)) &&
+            question.options &&
+            question.options.length > 0 && (
+              <div className="pl-[24px] flex flex-col gap-[6px] text-[15px] leading-[22px] text-[#5b6175]">
+                {question.options.map((opt) => (
+                  <div key={`stem-opt-${question.id}-${opt.label}`}>
+                    <span className="font-[600]">{opt.label}.</span>{" "}
+                    <span>{opt.content}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           {question.hasGeometryImage && <GeometryShapes />}
           {question.hasGeometryImage && <GeometryShapes />}
         </div>
@@ -1225,7 +1237,8 @@ function ChoiceOptions({
     <div className="flex flex-col gap-[12px]">
       {isMulti && !isSubmitted && !isRevealed && (
         <p className="text-[#a8abb2] text-[13px]">
-          澶氶€夐锛岃閫夋嫨鎵€鏈夋纭瓟妗?        </p>
+          多选题，请选择所有正确答案
+        </p>
       )}
       <div className="content-start flex flex-wrap gap-[24px] items-start">
         {question.options!.map((opt) => {
@@ -1267,12 +1280,6 @@ function ChoiceOptions({
               >
                 {opt.label}
               </span>
-              {/* Before submit: also show content text */}
-              {!isSubmitted && !isRevealed && (
-                <span className="text-[15px]">
-                  {opt.content}
-                </span>
-              )}
               {showCheck && (
                 <div className="absolute right-[16px] top-[16px] w-[24px] h-[24px]">
                   <svg
@@ -1640,16 +1647,17 @@ function HandwriteBoard({
   };
 
   const toolBtnClass =
-    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all";
+    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
   const getToolBtnStyle = (
     active?: boolean,
     danger?: boolean,
+    disabled?: boolean,
   ): React.CSSProperties => ({
-    background: active ? "#f1f2ff" : "#ffffff",
-    color: danger ? "#ff5c5c" : active ? "#6f75f4" : "#b7bcf7",
-    boxShadow: active
-      ? "0 4px 10px rgba(111,117,244,0.12)"
-      : "none",
+    background: "#ffffff",
+    color: disabled ? "#cfd4e6" : danger ? "#ff5c5c" : active ? "#6f75f4" : "#b7bcf7",
+    boxShadow: "none",
+    opacity: disabled ? 0.55 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
   });
 
   if (!open) return null;
@@ -1670,11 +1678,11 @@ function HandwriteBoard({
         className="relative h-full rounded-[20px] bg-white overflow-hidden"
         style={{ minHeight: fullHeight ? 520 : 420 }}
       >
-        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8] shadow-[0_10px_24px_rgba(111,117,244,0.12)]">
-          <button type="button" onClick={handleUndo} className={toolBtnClass} style={getToolBtnStyle(false)} title="??">
+        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8]">
+          <button type="button" onClick={handleUndo} disabled={!strokes.length} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length)} title="??">
             <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
           </button>
-          <button type="button" onClick={handleRedo} className={toolBtnClass} style={getToolBtnStyle(false)} title="????">
+          <button type="button" onClick={handleRedo} disabled={!redoStrokes.length} className={toolBtnClass} style={getToolBtnStyle(!!redoStrokes.length, false, !redoStrokes.length)} title="????">
             <Redo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
           </button>
           <button type="button" onClick={() => setIsErasing(true)} className={toolBtnClass} style={getToolBtnStyle(isErasing)} title="???">
@@ -1683,7 +1691,7 @@ function HandwriteBoard({
           <button type="button" onClick={() => setIsErasing(false)} className={toolBtnClass} style={getToolBtnStyle(!isErasing)} title="??">
             <PenLine className="w-[22px] h-[22px]" strokeWidth={1.8} />
           </button>
-          <button type="button" onClick={handleClear} className={toolBtnClass} style={getToolBtnStyle(false)} title="??">
+          <button type="button" onClick={handleClear} disabled={!strokes.length && !baseImageRef.current} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length && !baseImageRef.current)} title="??">
             <Trash2 className="w-[22px] h-[22px]" strokeWidth={1.8} />
           </button>
           <div className="w-px h-[34px] bg-[#e4e7ff]" />
@@ -1695,9 +1703,9 @@ function HandwriteBoard({
             onClick={handleConfirm}
             className={toolBtnClass}
             style={{
-              background: "#f1f2ff",
+              background: "#ECEBFF",
               color: "#6f75f4",
-              boxShadow: "0 4px 10px rgba(111,117,244,0.12)",
+              boxShadow: "none",
             }}
             title="??"
           >
@@ -1797,23 +1805,23 @@ function FillBlankInputs({
             <div className="w-[52px] shrink-0 pt-[8px] text-[22px] text-[#454b60]">
               {label}
             </div>
-            <div className="flex-1 relative min-h-[88px]">
+            <div className="flex-1 relative min-h-[72px]">
               <div className="flex items-stretch gap-[16px]">
                 <button
                   type="button"
                   onClick={() => !isSubmitted && !isRevealed && setEditingIdx(idx)}
                   disabled={isSubmitted || isRevealed}
-                  className="flex-1 min-h-[88px] overflow-hidden transition-all text-left"
+                  className="flex-1 min-h-[72px] overflow-hidden transition-all text-left"
                   style={{
                     background: "#ffffff",
                   }}
                 >
                   {val ? (
-                    <div className="w-full h-full flex items-center justify-center px-[18px] py-[4px]">
+                    <div className="w-full h-full flex items-end justify-start pl-[10px] pr-[18px] pt-[2px] pb-[0px]">
                       <img
                         src={val}
                         alt={"blank-" + (idx + 1)}
-                        className="max-w-[50%] max-h-[50%] object-contain"
+                        className="max-w-[72%] max-h-[72%] object-contain"
                       />
                     </div>
                   ) : (
@@ -1969,82 +1977,192 @@ function EssayInput({
 }
 
 // ============ DRAFT DRAWER ============
-function DraftDrawer({
+function DraftOverlay({
   open,
+  initialImage,
   onClose,
+  onSave,
 }: {
   open: boolean;
+  initialImage?: string;
   onClose: () => void;
+  onSave: (img: string) => void;
 }) {
-  const [text, setText] = useState("");
+  const boxRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const baseImageRef = useRef<HTMLImageElement | null>(null);
+  const currentStroke = useRef<Stroke | null>(null);
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const [redoStrokes, setRedoStrokes] = useState<Stroke[]>([]);
+  const [drawing, setDrawing] = useState(false);
+  const [isErasing, setIsErasing] = useState(false);
+
+  const redraw = (nextStrokes: Stroke[]) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (baseImageRef.current) {
+      ctx.drawImage(baseImageRef.current, 0, 0, canvas.width, canvas.height);
+    }
+    nextStrokes.forEach((s) =>
+      drawStrokePath(ctx, s, "#e53935", s.erase ? 24 : 4),
+    );
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const box = boxRef.current;
+    const canvas = canvasRef.current;
+    if (!box || !canvas) return;
+    const rect = box.getBoundingClientRect();
+    canvas.width = Math.max(1, Math.floor(rect.width));
+    canvas.height = Math.max(1, Math.floor(rect.height));
+    setStrokes([]);
+    setRedoStrokes([]);
+    baseImageRef.current = null;
+    if (!initialImage) {
+      redraw([]);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      baseImageRef.current = img;
+      redraw([]);
+    };
+    img.src = initialImage;
+  }, [open, initialImage]);
+
+  const pointFromEvent = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const p = pointFromEvent(e);
+    const stroke: Stroke = { points: [p], erase: isErasing };
+    currentStroke.current = stroke;
+    setDrawing(true);
+    setRedoStrokes([]);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawing || !currentStroke.current) return;
+    const p = pointFromEvent(e);
+    currentStroke.current.points.push(p);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    redraw(strokes);
+    drawStrokePath(ctx, currentStroke.current, "#e53935", currentStroke.current.erase ? 24 : 4);
+  };
+  const endStroke = () => {
+    if (!drawing || !currentStroke.current) return;
+    const next = [...strokes, currentStroke.current];
+    setStrokes(next);
+    redraw(next);
+    currentStroke.current = null;
+    setDrawing(false);
+  };
+  const handleUndo = () => {
+    if (!strokes.length) return;
+    const removed = strokes[strokes.length - 1];
+    const next = strokes.slice(0, -1);
+    setStrokes(next);
+    setRedoStrokes((prev) => [...prev, removed]);
+    redraw(next);
+  };
+  const handleRedo = () => {
+    if (!redoStrokes.length) return;
+    const recovered = redoStrokes[redoStrokes.length - 1];
+    const nextRedo = redoStrokes.slice(0, -1);
+    const next = [...strokes, recovered];
+    setRedoStrokes(nextRedo);
+    setStrokes(next);
+    redraw(next);
+  };
+  const handleClear = () => {
+    setStrokes([]);
+    setRedoStrokes([]);
+    baseImageRef.current = null;
+    redraw([]);
+  };
+  const handleConfirm = () => {
+    const canvas = canvasRef.current;
+    onSave(canvas ? canvas.toDataURL("image/png") : "");
+    onClose();
+  };
+
+  const toolBtnClass =
+    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
+  const getToolBtnStyle = (
+    active?: boolean,
+    danger?: boolean,
+    disabled?: boolean,
+  ): React.CSSProperties => ({
+    background: "#ffffff",
+    color: disabled ? "#cfd4e6" : danger ? "#ff5c5c" : active ? "#6f75f4" : "#b7bcf7",
+    boxShadow: "none",
+    opacity: disabled ? 0.55 : 1,
+    cursor: disabled ? "not-allowed" : "pointer",
+  });
+
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/20 z-10"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ x: 400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 400, opacity: 0 }}
-            transition={{
-              type: "spring",
-              damping: 24,
-              stiffness: 200,
-            }}
-            className="absolute right-0 top-0 h-full w-[400px] bg-white z-20 shadow-2xl flex flex-col"
-            style={{ borderRadius: "0 0 0 24px" }}
-          >
-            <div className="bg-[#c5d3ff] h-[56px] flex items-center justify-between px-[20px] shrink-0">
-              <div
-                className="flex items-center gap-[6px] text-[#33347c] text-[18px]"
-                style={{ fontWeight: 600 }}
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                >
-                  <path d={svgPaths.p2a71dc00} fill="#33347C" />
-                </svg>
-                草稿纸
-              </div>
-              <button
-                onClick={onClose}
-                className="w-[32px] h-[32px] flex items-center justify-center rounded-full hover:bg-[rgba(0,0,0,0.1)] transition-all"
-              >
-                <X className="w-[18px] h-[18px] text-[#33347c]" />
-              </button>
-            </div>
-            <div className="flex-1 p-[16px] flex flex-col gap-[12px]">
-              <p className="text-[#a8abb2] text-[13px]">
-                请在此记录解题思路和草稿计算过程。              </p>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="在这里写下你的计算过程和思路..."
-                className="flex-1 w-full rounded-[12px] p-[14px] text-[15px] leading-[1.8] outline-none resize-none"
-                style={{
-                  background: "#fafafa",
-                  border: "2px solid #e8e9ff",
-                  color: "#303133",
-                }}
-              />
-              <button
-                onClick={() => setText("")}
-                className="self-end text-[#a8abb2] text-[13px] hover:text-[#ff4d4f] transition-colors"
-              >
-                清空草稿
-              </button>
-            </div>
-          </motion.div>
-        </>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 z-30"
+        >
+          <div className="absolute inset-0 bg-black/35" />
+          <div ref={boxRef} className="absolute inset-0">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full block touch-none"
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={endStroke}
+              onPointerLeave={endStroke}
+            />
+          </div>
+          <div className="absolute right-[28px] top-[82px] z-40 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8]">
+            <button type="button" onClick={handleUndo} disabled={!strokes.length} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length)}>
+              <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+            </button>
+            <button type="button" onClick={handleRedo} disabled={!redoStrokes.length} className={toolBtnClass} style={getToolBtnStyle(!!redoStrokes.length, false, !redoStrokes.length)}>
+              <Redo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+            </button>
+            <button type="button" onClick={() => setIsErasing(true)} className={toolBtnClass} style={getToolBtnStyle(isErasing)}>
+              <Eraser className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            </button>
+            <button type="button" onClick={() => setIsErasing(false)} className={toolBtnClass} style={getToolBtnStyle(!isErasing)}>
+              <PenLine className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            </button>
+            <button type="button" onClick={handleClear} disabled={!strokes.length && !baseImageRef.current} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length && !baseImageRef.current)}>
+              <Trash2 className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            </button>
+            <div className="w-px h-[34px] bg-[#e4e7ff]" />
+            <button type="button" onClick={onClose} className={toolBtnClass} style={getToolBtnStyle(false, true)}>
+              <X className="w-[22px] h-[22px]" strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className={toolBtnClass}
+              style={{
+                background: "#ECEBFF",
+                color: "#6f75f4",
+                boxShadow: "none",
+              }}
+            >
+              <Check className="w-[22px] h-[22px]" strokeWidth={2.2} />
+            </button>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -2082,6 +2200,7 @@ export function WrongQuestionReview() {
     Record<number, Record<number, "correct" | "wrong">>
   >({});
   const [showDraft, setShowDraft] = useState(false);
+  const [draftMap, setDraftMap] = useState<Record<number, string>>({});
 
   // ---- Derived ----
   const question = QUESTIONS[currentIndex];
@@ -2433,9 +2552,16 @@ export function WrongQuestionReview() {
           />
         </div>
 
-        <DraftDrawer
+        <DraftOverlay
           open={showDraft}
+          initialImage={draftMap[wdQ.id] || ""}
           onClose={() => setShowDraft(false)}
+          onSave={(img) =>
+            setDraftMap((prev) => ({
+              ...prev,
+              [wdQ.id]: img,
+            }))
+          }
         />
       </div>
     );
@@ -2494,9 +2620,16 @@ export function WrongQuestionReview() {
           onManualJudge={handleManualJudge}
         />
       </div>
-      <DraftDrawer
+      <DraftOverlay
         open={showDraft}
+        initialImage={draftMap[question.id] || ""}
         onClose={() => setShowDraft(false)}
+        onSave={(img) =>
+          setDraftMap((prev) => ({
+            ...prev,
+            [question.id]: img,
+          }))
+        }
       />
     </div>
   );
