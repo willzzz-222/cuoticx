@@ -204,14 +204,11 @@ const QUESTIONS: Question[] = [
 ];
 
 const ERROR_CAUSES = [
-  "概念不清",
-  "审题不仔细",
-  "计算失误",
-  "步骤不完整",
-  "公式记错",
-  "粗心漏写",
-  "思路偏差",
-  "时间不足",
+  "马虎粗心",
+  "没有思路",
+  "运算错误",
+  "知识遗忘",
+  "概念未掌握",
 ];
 
 function normalizeType(qType: string) {
@@ -261,6 +258,7 @@ function getTypeLabelZh(qType: string) {
 
 function getHandwritePartLabels(question?: Question | null) {
   if (!question) return ["1"];
+  if (isEssayType(question.type)) return ["1"];
   if (isFillBlankType(question.type)) {
     const count = question.blanksCount || 1;
     return Array.from({ length: count }, (_, i) => String(i + 1));
@@ -388,6 +386,23 @@ function getOptionVariant(
   if (isCorrect && !isSelected) return "correct-unselected";
   if (!isCorrect && isSelected) return "wrong-selected";
   return "default";
+}
+
+function checkIsCorrect(
+  question: Question,
+  userAnswer: string | string[],
+) {
+  if (isSingleChoiceType(question.type) || isTrueFalseType(question.type)) {
+    return userAnswer === question.correctAnswer;
+  }
+  if (isMultiChoiceType(question.type)) {
+    const ua = Array.isArray(userAnswer) ? [...userAnswer].sort() : [];
+    const ca = Array.isArray(question.correctAnswer)
+      ? [...question.correctAnswer].sort()
+      : [];
+    return ua.length === ca.length && ua.every((v, i) => v === ca[i]);
+  }
+  return false;
 }
 
 const OPTION_STYLES: Record<
@@ -805,7 +820,7 @@ function ErrorCauseSection({
             >
               <div className="relative flex items-center justify-center mb-[14px]">
                 <h3
-                  className="text-[42px] text-[#2f3340]"
+                  className="text-[34px] text-[#2f3340]"
                   style={{ fontWeight: 600, lineHeight: 1.1 }}
                 >
                   {"\u9519\u56e0\u8bb0\u5f55"}
@@ -823,7 +838,7 @@ function ErrorCauseSection({
                   <Tag className="w-[24px] h-[24px] text-[#f37a20]" />
                 </div>
                 <div
-                  className="text-[32px] text-[#2f3340]"
+                  className="text-[24px] text-[#2f3340]"
                   style={{ fontWeight: 600 }}
                 >
                   {"\u9519\u56e0\u6807\u8bb0\uff08\u53ef\u591a\u9009\uff09"}
@@ -879,7 +894,7 @@ function ErrorCauseSection({
                   <PencilLine className="w-[24px] h-[24px] text-[#3d7cec]" />
                 </div>
                 <div
-                  className="text-[32px] text-[#2f3340]"
+                  className="text-[24px] text-[#2f3340]"
                   style={{ fontWeight: 600 }}
                 >
                   {"\u5176\u4ed6\u8bb0\u5f55"}
@@ -981,6 +996,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
     isSubmitted,
     isRevealed,
     isLast,
+    showConfirmButton = false,
     selectedCauses,
     confirmed,
     manualJudges,
@@ -1004,9 +1020,14 @@ function AnswerPanelV3(props: AnswerPanelProps) {
   const allJudged =
     isHandwriteQuestion && partLabels.every((_, idx) => !!judgeEntries[idx]);
   const hasWrongJudge = Object.values(judgeEntries).includes("wrong");
+  const isObjectiveWrong =
+    !isHandwriteQuestion &&
+    isSubmitted &&
+    !isRevealed &&
+    !checkIsCorrect(question, userAnswer ?? "");
   const isAnswerable =
     isEssayType(question.type)
-      ? essayText.trim().length > 10
+      ? essayText.trim().length > 0
       : isFillBlankType(question.type)
         ? fillBlanks.some((b) => b.trim())
         : Array.isArray(userAnswer)
@@ -1014,7 +1035,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
           : !!userAnswer;
   const showErrorCause =
     showResult &&
-    (isRevealed || (isHandwriteQuestion ? hasWrongJudge : false));
+    (isRevealed || (isHandwriteQuestion ? hasWrongJudge : isObjectiveWrong));
 
   return (
     <div
@@ -1071,13 +1092,14 @@ function AnswerPanelV3(props: AnswerPanelProps) {
           />
         )}
         {isEssayType(question.type) && (
-          <EssayInput
-            value={essayText}
+          <FillBlankInputs
+            question={question}
+            fillBlanks={[essayText]}
             isSubmitted={isSubmitted}
             isRevealed={isRevealed}
-            judge={manualJudges?.[0]}
-            onManualJudge={(value) => onManualJudge(0, value)}
-            onChange={onEssayChange}
+            manualJudges={manualJudges}
+            onManualJudge={onManualJudge}
+            onChange={(_, val) => onEssayChange(val)}
           />
         )}
       </div>
@@ -1109,7 +1131,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
           <div className="flex items-center justify-end gap-[16px]">
             {allJudged && (
               <button
-                onClick={isLast ? "批改完成，完成练习" : "批改完成，下一题"}
+                onClick={isLast ? onFinish : onNext}
                 className="px-[32px] py-[14px] rounded-[999px] text-white text-[16px]"
                 style={{
                   background: "#7075ef",
@@ -1315,8 +1337,8 @@ function TrueFalseOptions({
   onSelect: (label: string) => void;
 }) {
   const opts = [
-    { label: "true", icon: "?", text: "??" },
-    { label: "false", icon: "?", text: "??" },
+    { label: "true", icon: "check", text: "正确" },
+    { label: "false", icon: "cross", text: "错误" },
   ];
 
   return (
@@ -1348,7 +1370,36 @@ function TrueFalseOptions({
                   : "pointer",
             }}
           >
-            <span className="text-[28px]">{icon}</span>
+            <span className="text-[28px] leading-none">
+              {icon === "check" ? (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M5 12L10 17L19 8"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M7 7L17 17"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M17 7L7 17"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </span>
             <span
               className="text-[20px]"
               style={{ fontWeight: 600 }}
@@ -1557,7 +1608,7 @@ function HandwriteBoard({
       return;
     }
 
-    const padding = 8;
+    const padding = 0;
     const cropX = Math.max(0, minX - padding);
     const cropY = Math.max(0, minY - padding);
     const cropW = Math.min(width - cropX, maxX - minX + padding * 2 + 1);
@@ -1594,10 +1645,10 @@ function HandwriteBoard({
     active?: boolean,
     danger?: boolean,
   ): React.CSSProperties => ({
-    background: active ? "#e7e5ff" : "#ffffff",
+    background: active ? "#f1f2ff" : "#ffffff",
     color: danger ? "#ff5c5c" : active ? "#6f75f4" : "#b7bcf7",
     boxShadow: active
-      ? "0 8px 18px rgba(111,117,244,0.18)"
+      ? "0 4px 10px rgba(111,117,244,0.12)"
       : "none",
   });
 
@@ -1616,10 +1667,10 @@ function HandwriteBoard({
     >
       <div
         ref={boxRef}
-        className="relative h-full rounded-[20px] border border-[#edf0ff] bg-white overflow-hidden"
+        className="relative h-full rounded-[20px] bg-white overflow-hidden"
         style={{ minHeight: fullHeight ? 520 : 420 }}
       >
-        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] shadow-[0_10px_24px_rgba(111,117,244,0.12)]">
+        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8] shadow-[0_10px_24px_rgba(111,117,244,0.12)]">
           <button type="button" onClick={handleUndo} className={toolBtnClass} style={getToolBtnStyle(false)} title="??">
             <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
           </button>
@@ -1644,9 +1695,9 @@ function HandwriteBoard({
             onClick={handleConfirm}
             className={toolBtnClass}
             style={{
-              background: "#e7e5ff",
+              background: "#f1f2ff",
               color: "#6f75f4",
-              boxShadow: "0 8px 18px rgba(111,117,244,0.18)",
+              boxShadow: "0 4px 10px rgba(111,117,244,0.12)",
             }}
             title="??"
           >
@@ -1737,26 +1788,32 @@ function FillBlankInputs({
             className="flex items-stretch gap-[18px] px-[18px] py-[18px]"
             style={{
               borderTop: idx === 0 ? "none" : "1px solid #eceef8",
+              borderBottom:
+                labels.length === 1 || idx === labels.length - 1
+                  ? "1px solid #eceef8"
+                  : "none",
             }}
           >
             <div className="w-[52px] shrink-0 pt-[8px] text-[22px] text-[#454b60]">
               {label}
             </div>
-            <div className="flex-1 relative min-h-[112px]">
+            <div className="flex-1 relative min-h-[88px]">
               <div className="flex items-stretch gap-[16px]">
                 <button
                   type="button"
                   onClick={() => !isSubmitted && !isRevealed && setEditingIdx(idx)}
                   disabled={isSubmitted || isRevealed}
-                  className="flex-1 min-h-[112px] overflow-hidden transition-all text-left"
-                  style={{ background: "#ffffff", borderBottom: "2px solid #e8e9ff" }}
+                  className="flex-1 min-h-[88px] overflow-hidden transition-all text-left"
+                  style={{
+                    background: "#ffffff",
+                  }}
                 >
                   {val ? (
-                    <div className="w-full h-full flex items-center justify-center px-[18px] py-[12px]">
+                    <div className="w-full h-full flex items-center justify-center px-[18px] py-[4px]">
                       <img
                         src={val}
                         alt={"blank-" + (idx + 1)}
-                        className="max-w-[72%] max-h-[72%] object-contain"
+                        className="max-w-[50%] max-h-[50%] object-contain"
                       />
                     </div>
                   ) : (
@@ -1768,25 +1825,36 @@ function FillBlankInputs({
                     <button
                       type="button"
                       onClick={() => onManualJudge?.(idx, "correct")}
-                      className="h-[52px] rounded-[999px] text-[16px] transition-all"
+                      className="h-[52px] rounded-[999px] text-[16px] transition-all flex items-center justify-center gap-[6px]"
                       style={{
-                        background: judge === "correct" ? "#eefad8" : "#f7f8fc",
-                        color: judge === "correct" ? "#86c73f" : "#b7bdc9",
-                        border: judge === "correct" ? "1px solid #d7efaf" : "1px solid #eff1f6",
+                        background: judge === "correct" ? "#9BCC37" : "#f7f8fc",
+                        color: judge === "correct" ? "#ffffff" : "#b7bdc9",
+                        border: judge === "correct" ? "1px solid #9BCC37" : "1px solid #eff1f6",
                       }}
                     >
+                      {judge === "correct" && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                          <path d="M2.5 7.2L5.6 10.3L11.5 4.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
                       {"对了"}
                     </button>
                     <button
                       type="button"
                       onClick={() => onManualJudge?.(idx, "wrong")}
-                      className="h-[52px] rounded-[999px] text-[16px] transition-all"
+                      className="h-[52px] rounded-[999px] text-[16px] transition-all flex items-center justify-center gap-[6px]"
                       style={{
-                        background: judge === "wrong" ? "#fff2f0" : "#f7f8fc",
-                        color: judge === "wrong" ? "#ff7b67" : "#b7bdc9",
-                        border: judge === "wrong" ? "1px solid #ffd7d1" : "1px solid #eff1f6",
+                        background: judge === "wrong" ? "#FFECE8" : "#f7f8fc",
+                        color: judge === "wrong" ? "#ff5c5c" : "#b7bdc9",
+                        border: judge === "wrong" ? "1px solid #FFD8D1" : "1px solid #eff1f6",
                       }}
                     >
+                      {judge === "wrong" && (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                          <path d="M3 3L11 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <path d="M11 3L3 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      )}
                       {"错了"}
                     </button>
                   </div>
@@ -1852,7 +1920,7 @@ function EssayInput({
         >
           {value ? (
             <div className="w-full h-[420px] flex items-center justify-center px-[24px] py-[20px]">
-              <img src={value} alt="essay-handwriting" className="max-w-[78%] max-h-[78%] object-contain" />
+              <img src={value} alt="essay-handwriting" className="max-w-[62%] max-h-[62%] object-contain" />
             </div>
           ) : (
             <div className="w-full h-[420px] px-[16px] py-[14px] text-[#a8abb2] text-[14px]">{"点击输入"}</div>
@@ -2014,9 +2082,6 @@ export function WrongQuestionReview() {
     Record<number, Record<number, "correct" | "wrong">>
   >({});
   const [showDraft, setShowDraft] = useState(false);
-  const [autoAdvancedMap, setAutoAdvancedMap] = useState<
-    Record<number, boolean>
-  >({});
 
   // ---- Derived ----
   const question = QUESTIONS[currentIndex];
@@ -2033,34 +2098,6 @@ export function WrongQuestionReview() {
   const isLast = currentIndex === QUESTIONS.length - 1;
   const isCurrentHandwriteQuestion =
     isFillBlankType(question.type) || isEssayType(question.type);
-  const isCurrentObjectiveCorrect =
-    isSubmitted &&
-    !isRevealed &&
-    !isCurrentHandwriteQuestion &&
-    checkIsCorrect(question, answers[question.id] ?? "");
-
-  useEffect(() => {
-    if (viewMode !== "quiz") return;
-    if (!isCurrentObjectiveCorrect) return;
-    if (isLast) return;
-    if (autoAdvancedMap[question.id]) return;
-
-    setAutoAdvancedMap((prev) => ({ ...prev, [question.id]: true }));
-    const timer = window.setTimeout(() => {
-      setCurrentIndex((idx) =>
-        idx < QUESTIONS.length - 1 ? idx + 1 : idx,
-      );
-    }, 520);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    viewMode,
-    isCurrentObjectiveCorrect,
-    isLast,
-    autoAdvancedMap,
-    question.id,
-  ]);
-
   // Compute per-question result status
   const questionResults = QUESTIONS.map((q) => {
     const isQ_Submitted = submitted[q.id] || false;
@@ -2175,8 +2212,25 @@ export function WrongQuestionReview() {
     }));
   };
 
-  const handleSubmit = () =>
+  const handleSubmit = () => {
     setSubmitted((prev) => ({ ...prev, [question.id]: true }));
+
+    // Objective questions auto-advance when correct.
+    const isObjective =
+      isSingleChoiceType(question.type) ||
+      isMultiChoiceType(question.type) ||
+      isTrueFalseType(question.type);
+    if (!isObjective || isLast) return;
+
+    const currentAnswer = answers[question.id] ?? "";
+    if (!checkIsCorrect(question, currentAnswer)) return;
+
+    setTimeout(() => {
+      setCurrentIndex((idx) =>
+        idx < QUESTIONS.length - 1 ? idx + 1 : idx,
+      );
+    }, 420);
+  };
   const handleReveal = () => {
     const revealJudges = Object.fromEntries(
       getHandwritePartLabels(question).map((_, idx) => [idx, "wrong"]),
