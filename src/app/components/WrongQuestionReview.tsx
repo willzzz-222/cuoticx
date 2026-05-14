@@ -1,18 +1,32 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, X, Star } from "lucide-react";
-import svgPaths from "../../imports/错题本详情页选择题待检查/svg-jvu32dafeg";
-import svgPaths2 from "../../imports/错题本详情页选择题待检查-1/svg-ltwr1plp22";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Star,
+  Tag,
+  PencilLine,
+  PenLine,
+  Eraser,
+  Undo2,
+  Redo2,
+  Trash2,
+  Check,
+  Image as ImageIcon,
+  Mic,
+  Video,
+} from "lucide-react";
 import imgGeometry from "figma:asset/6e109925589a4a403896cd2e02a844159083d75a.png";
 import { ResultScreen } from "./ResultScreen";
 
+// Fallback icon path maps. The original generated imports were removed,
+// so we guard runtime rendering to avoid ReferenceError -> white screen.
+const svgPaths: Record<string, string> = {};
+const svgPaths2: Record<string, string> = {};
+
 // ============ TYPES ============
-type QuestionType =
-  | "单选题"
-  | "多选题"
-  | "判断题"
-  | "填空题"
-  | "解答题";
+type QuestionType = string;
 
 interface Question {
   id: number;
@@ -25,7 +39,7 @@ interface Question {
   answerText: string;
   analysisText: string;
   subject: string;
-  difficulty: "简单" | "中等" | "困难";
+  difficulty: string;
   hasGeometryImage?: boolean;
 }
 
@@ -33,236 +47,230 @@ interface Question {
 const QUESTIONS: Question[] = [
   {
     id: 1,
-    type: "单选题",
-    content:
-      "下列各图形，绕各自的中心点旋转180°后，不能完全重合的是（  ）",
+    type: "single",
+    content: "解方程 3x - 6 = 0，x 的值是？",
     options: [
-      { label: "A", content: "圆形" },
-      { label: "B", content: "等边三角形" },
-      { label: "C", content: "菱形" },
-      { label: "D", content: "正方形" },
+      { label: "A", content: "x = 2" },
+      { label: "B", content: "x = -2" },
+      { label: "C", content: "x = 3" },
+      { label: "D", content: "x = -3" },
     ],
-    correctAnswer: "B",
-    answerText:
-      "解：A、圆绕中心旋转任意角度都能与原图形重合，当然旋转180°也能完全重合。B、等边三角形只有三个顶点，绕中心点旋转180°后，原本朝上的顶点会转到下方，原本在底部的边会转到上方，无法与原图形重合。C、菱形绕中心点旋转180°后，上下对角互换，左右对角互换，图形与原图形完全重合。D、正方形绕中心点旋转180°后，四个角的位置互换，四条边的位置互换，图形与原图形完全重合。故选：B。",
-    analysisText:
-      "绕各自的中心点旋转180°，也就是图形绕中心点转动半圈后，观察其形状和位置是否与原图形完全一致。旋转对称图形：旋转某个角度后与原图形重合，等边三角形最小旋转角为120°，不是180°。",
-    subject: "数学 · 图形变换",
+    correctAnswer: "A",
+    answerText: "x = 2",
+    analysisText: "3x - 6 = 0，移项得 3x = 6，所以 x = 2。",
+    subject: "数学 · 代数",
     difficulty: "中等",
-    hasGeometryImage: true,
   },
   {
     id: 2,
-    type: "单选题",
-    content: "解方程 3x − 6 = 0，x 的值是（  ）",
+    type: "multi",
+    content: "下列分数中，属于真分数的是？",
     options: [
-      { label: "A", content: "x = 2" },
-      { label: "B", content: "x = −2" },
-      { label: "C", content: "x = 3" },
-      { label: "D", content: "x = −3" },
+      { label: "A", content: "1/2" },
+      { label: "B", content: "3/4" },
+      { label: "C", content: "7/5" },
+      { label: "D", content: "9/8" },
     ],
-    correctAnswer: "A",
-    answerText:
-      "解：3x − 6 = 0，移项得：3x = 6，两边除以3得：x = 2。验证：代入原方程 3×2 − 6 = 0 ✓。故选：A。",
-    analysisText:
-      "解一元一次方程的基本步骤：①移项（把含未知数的项移到左边，常数项移到右边）；②合并同类项；③系数化为1（两边同除以系数）。",
-    subject: "数学 · 一元一次方程",
+    correctAnswer: ["A", "B"],
+    answerText: "A、B",
+    analysisText: "真分数分子小于分母，所以 1/2、3/4 正确。",
+    subject: "数学 · 分数",
     difficulty: "简单",
   },
   {
     id: 3,
-    type: "单选题",
-    content: "计算 (−3)² + 2 × (−3) + 1 的结果是（  ）",
-    options: [
-      { label: "A", content: "4" },
-      { label: "B", content: "−4" },
-      { label: "C", content: "16" },
-      { label: "D", content: "10" },
-    ],
-    correctAnswer: "A",
-    answerText:
-      "解：(−3)² + 2×(−3) + 1 = 9 + (−6) + 1 = 9 − 6 + 1 = 4。注意：(−3)² = (−3)×(−3) = 9（负数的偶次方为正）。故选：A。",
-    analysisText:
-      "注意区分 (−3)² 与 −3²：(−3)² = 9，而 −3² = −9。按运算顺序：先乘方，再乘除，最后加减。",
-    subject: "数学 · 有理数运算",
+    type: "judge",
+    content: "所有的等边三角形都是等腰三角形。",
+    correctAnswer: "true",
+    answerText: "对",
+    analysisText: "等边三角形三边相等，必然至少有两边相等，所以也是等腰三角形。",
+    subject: "数学 · 几何",
     difficulty: "简单",
   },
   {
     id: 4,
-    type: "单选题",
-    content: "若 a∶b = 2∶3，b∶c = 4∶5，则 a∶b∶c 等于（  ）",
-    options: [
-      { label: "A", content: "2∶3∶5" },
-      { label: "B", content: "8∶12∶15" },
-      { label: "C", content: "2∶4∶5" },
-      { label: "D", content: "4∶6∶5" },
-    ],
-    correctAnswer: "B",
-    answerText:
-      "解：将b统一化。a∶b = 2∶3 = 8∶12，b∶c = 4∶5 = 12∶15。b统一为12时，a = 8，c = 15。所以 a∶b∶c = 8∶12∶15。故选：B。",
-    analysisText:
-      "连比的求法：找到中间量b的公倍数，将两个比中b化为同一值，再写出a、b、c的比。",
-    subject: "数学 · 比和比例",
+    type: "fill",
+    content: "计算并填写结果。",
+    blanksCount: 3,
+    blanksLabels: ["1", "2", "3"],
+    correctAnswer: ["312", "103", "191"],
+    answerText: "1=312，2=103，3=191",
+    analysisText: "按顺序完成三道计算并核对结果。",
+    subject: "数学 · 计算",
     difficulty: "中等",
   },
   {
     id: 5,
-    type: "多选题",
-    content: "下列关于平行四边形的说法，正确的是（  ）",
-    options: [
-      { label: "A", content: "对边相等" },
-      { label: "B", content: "四个角都是直角" },
-      { label: "C", content: "对角线互相平分" },
-      { label: "D", content: "对角相等" },
-    ],
-    correctAnswer: ["A", "C", "D"],
-    answerText:
-      '解：平行四边形的基本性质：①对边平行且相等（A ✓）；②对角线互相平分（C ✓）；③对角相等（D ✓）。B选项"四个角都是直角"是矩形的特有性质，普通平行四边形不一定满足（B ✗）。故选：A、C、D。',
-    analysisText:
-      "平行四边形的四条基本性质：两组对边平行、两组对边相等、对角相等、对角线互相平分。注意与矩形、菱形、正方形的特殊性质区分。",
-    subject: "数学 · 平行四边形",
+    type: "essay",
+    content: "写出半径为 r 的圆的面积和周长公式。",
+    correctAnswer: ["S=πr²", "C=2πr"],
+    answerText: "S=πr²，C=2πr",
+    analysisText: "圆面积公式 S=πr²，圆周长公式 C=2πr。",
+    subject: "数学 · 圆",
     difficulty: "中等",
   },
   {
     id: 6,
-    type: "多选题",
-    content: "下列各式中，属于一次函数的是（  ）",
+    type: "single",
+    content: "计算 (-3)^2 + 2×(-3) + 1 的值是？",
     options: [
-      { label: "A", content: "y = x²" },
-      { label: "B", content: "y = 2x − 1" },
-      { label: "C", content: "y = −3x" },
-      { label: "D", content: "y = 1/x" },
+      { label: "A", content: "4" },
+      { label: "B", content: "-14" },
+      { label: "C", content: "16" },
+      { label: "D", content: "10" },
     ],
-    correctAnswer: ["B", "C"],
-    answerText:
-      "解：一次函数的定义是 y = kx + b（k ≠ 0）。B: y = 2x − 1，k = 2，b = −1，满足（✓）。C: y = −3x，k = −3，b = 0，满足（✓）。A: y = x² 是二次函数（✗）。D: y = 1/x 是反比例函数（✗）。故选：B、C。",
-    analysisText:
-      "一次函数 y = kx + b（k ≠ 0）的特征：x的次数为1，b=0时为正比例函数。注意区分一次函数、二次函数、反比例函数。",
-    subject: "数学 · 一次函数",
+    correctAnswer: "A",
+    answerText: "4",
+    analysisText: "9 - 6 + 1 = 4。",
+    subject: "数学 · 代数",
     difficulty: "简单",
   },
   {
     id: 7,
-    type: "多选题",
-    content: "下列各数中，属于无理数的是（  ）",
-    options: [
-      { label: "A", content: "0.3333…" },
-      { label: "B", content: "√2" },
-      { label: "C", content: "π" },
-      { label: "D", content: "3/7" },
-    ],
-    correctAnswer: ["B", "C"],
-    answerText:
-      "解：无理数是无限不循环小数。√2 ≈ 1.41421356… 无限不循环，是无理数（✓）。π ≈ 3.14159265… 无限不循环，是无理数（✓）。0.3333… = 1/3 是循环小数，属有理数（✗）。3/7 是分数，属有理数（✗）。故选：B、C。",
-    analysisText:
-      "数的分类：有理数（整数、有限小数、无限循环小数）和无理数（无限不循环小数）。有理数和无理数合称实数。√2、√3、π等都是常见的无理数。",
-    subject: "数学 · 实数分类",
+    type: "judge",
+    content: "一个三角形内角和等于 180°。",
+    correctAnswer: "true",
+    answerText: "对",
+    analysisText: "平面几何中三角形内角和恒为 180°。",
+    subject: "数学 · 几何",
     difficulty: "简单",
   },
   {
     id: 8,
-    type: "判断题",
-    content: "菱形是特殊的平行四边形，其对角线互相垂直平分。",
-    correctAnswer: "true",
-    answerText:
-      "答：正确。菱形的四条边都相等，是特殊的平行四边形。菱形的对角线具有特殊性质：①互相平分（平行四边形共有性质）；②互相垂直（菱形特有性质）。因此，菱形的对角线互相垂直平分。",
-    analysisText:
-      "菱形是四边都相等的平行四边形。除拥有平行四边形的所有性质外，还有：对角线互相垂直，每条对角线平分一组对角。",
-    subject: "数学 · 菱形",
-    difficulty: "简单",
+    type: "fill",
+    content: "解方程组 3x-y=7，x+y=5，求 x、y。",
+    blanksCount: 2,
+    blanksLabels: ["1", "2"],
+    correctAnswer: ["3", "2"],
+    answerText: "x=3，y=2",
+    analysisText: "两式相加得 4x=12，x=3，再代入得 y=2。",
+    subject: "数学 · 方程组",
+    difficulty: "中等",
   },
   {
     id: 9,
-    type: "判断题",
-    content: "两个锐角之和一定是钝角。",
-    correctAnswer: "false",
-    answerText:
-      "答：错误。两个锐角（均小于90°）之和的范围是 (0°, 180°)，并不是一定等于钝角（90°到180°）。反例：30° + 40° = 70°（锐角）；45° + 45° = 90°（直角）；60° + 70° = 130°（钝角）。因此，两个锐角之和可能是锐角、直角或钝角。",
-    analysisText:
-      '用反例法验证命题：找到一个满足条件但结论不成立的例子，即可证明命题为假。遇到"一定"、"必然"等绝对词时，要特别注意寻找反例。',
-    subject: "数学 · 角的分类",
-    difficulty: "简单",
+    type: "essay",
+    content: "请说明为什么任何数乘 0 都等于 0。",
+    correctAnswer: ["利用乘法分配律", "结果为0"],
+    answerText: "由 a×(0+0)=a×0+a×0，推出 a×0=0。",
+    analysisText: "设 a×0=b，则 b=a×(0+0)=a×0+a×0=b+b，因此 b=0。",
+    subject: "数学 · 数与式",
+    difficulty: "中等",
   },
   {
     id: 10,
-    type: "填空题",
-    content:
-      "解方程组：\n   3x − y = 7\n   x + y = 5\n\n则 x = ____，y = ____",
-    blanksCount: 2,
-    blanksLabels: ["x", "y"],
-    correctAnswer: ["3", "2"],
-    answerText:
-      "解：将两方程相加（加减消元法）：\n(3x − y) + (x + y) = 7 + 5\n4x = 12，解得 x = 3\n代入 x + y = 5：3 + y = 5，解得 y = 2\n所以 x = 3，y = 2。",
-    analysisText:
-      "解二元一次方程组的常用方法：①加减消元法（将两方程相加或相减，消去一个未知数）；②代入消元法（用一个方程表达一个未知数，代入另一方程）。本题用加减法更简便。",
-    subject: "数学 · 二元一次方程组",
+    type: "single",
+    content: "函数 y=2x-1 与 y 轴的交点是？",
+    options: [
+      { label: "A", content: "(0,-1)" },
+      { label: "B", content: "(0,1)" },
+      { label: "C", content: "(1,0)" },
+      { label: "D", content: "(2,1)" },
+    ],
+    correctAnswer: "A",
+    answerText: "A",
+    analysisText: "令 x=0，得 y=-1，交点为 (0,-1)。",
+    subject: "数学 · 函数",
     difficulty: "中等",
   },
   {
     id: 11,
-    type: "填空题",
-    content:
-      "已知圆的半径为 r，请写出圆的公式：\n\n圆的面积：S = ____\n圆的周长：C = ____",
+    type: "fill",
+    content: "填空：半径为 r 的圆，面积是（1），周长是（2）。",
     blanksCount: 2,
-    blanksLabels: ["S", "C"],
+    blanksLabels: ["1", "2"],
     correctAnswer: ["πr²", "2πr"],
-    answerText:
-      "解：圆的两个基本公式：\n① 圆的面积 S = πr²（π ≈ 3.14，r 为半径）\n② 圆的周长 C = 2πr（也可写作 C = πd，其中 d = 2r 为直径）",
-    analysisText:
-      "圆的面积和周长公式是基础，需要熟记。注意面积公式中 r 是平方，而周长公式中 r 是一次方。半径 r、直径 d = 2r 的关系也要清楚。",
+    answerText: "1=πr²，2=2πr",
+    analysisText: "直接应用圆的面积和周长公式。",
     subject: "数学 · 圆",
     difficulty: "简单",
   },
   {
     id: 12,
-    type: "解答题",
-    content:
-      "已知 △ABC 中，AB = AC，D 是 BC 的中点，求证：AD ⊥ BC。",
-    correctAnswer: "",
-    answerText:
-      "【证明过程】\n在 △ABD 和 △ACD 中：\n  ① AB = AC（已知）\n  ② BD = CD（D 是 BC 中点，已知）\n  ③ AD = AD（公共边）\n∴ △ABD ≅ △ACD（SSS）\n∴ ∠ADB = ∠ADC（全等三角形对应角相等）\n又 ∠ADB + ∠ADC = 180°（平角）\n∴ ∠ADB = ∠ADC = 90°\n∴ AD ⊥ BC  ■",
-    analysisText:
-      "本题考查全等三角形的判定（SSS）和性质。证明两线段垂直，关键是证明所成角等于90°。思路：构造两个全等三角形，利用全等得到相等的角，再利用平角180°推出每个角为90°。",
-    subject: "数学 · 全等三角形",
-    difficulty: "困难",
+    type: "multi",
+    content: "下列数中，属于无理数的是？",
+    options: [
+      { label: "A", content: "√2" },
+      { label: "B", content: "π" },
+      { label: "C", content: "1/3" },
+      { label: "D", content: "0.5" },
+    ],
+    correctAnswer: ["A", "B"],
+    answerText: "A、B",
+    analysisText: "√2 和 π 不能表示成两个整数之比，属于无理数。",
+    subject: "数学 · 实数",
+    difficulty: "中等",
   },
 ];
 
 const ERROR_CAUSES = [
-  "马虎粗心",
-  "概念未掌握",
-  "没有思路",
-  "运算错误",
-  "知识遗忘",
+  "概念不清",
+  "审题不仔细",
+  "计算失误",
+  "步骤不完整",
+  "公式记错",
+  "粗心漏写",
+  "思路偏差",
+  "时间不足",
 ];
 
-// ============ HELPERS ============
-function checkIsCorrect(
-  q: Question,
-  answer: string | string[],
-): boolean {
-  if (q.type === "解答题") return false;
-  if (Array.isArray(q.correctAnswer)) {
-    const ca = [...(q.correctAnswer as string[])].sort();
-    const ua = Array.isArray(answer)
-      ? [...answer].sort()
-      : [answer];
-    return JSON.stringify(ca) === JSON.stringify(ua);
-  }
-  return (
-    String(answer).toLowerCase().trim() ===
-    String(q.correctAnswer).toLowerCase().trim()
-  );
+function normalizeType(qType: string) {
+  const v = (qType || "").toLowerCase();
+  if (v.includes("single")) return "single";
+  if (v.includes("multi")) return "multi";
+  if (v.includes("judge")) return "judge";
+  if (v.includes("fill")) return "fill";
+  if (v.includes("essay")) return "essay";
+  return v;
 }
 
-function checkBlankCorrect(
-  correct: string,
-  userVal: string,
-): boolean {
-  return (
-    userVal.toLowerCase().trim().replace(/\s/g, "") ===
-    correct.toLowerCase().trim().replace(/\s/g, "")
-  );
+function isType(qType: string, labels: string[]) {
+  const n = normalizeType(qType);
+  return labels.includes(n);
+}
+
+function isSingleChoiceType(qType: string) {
+  return isType(qType, ["single"]);
+}
+
+function isMultiChoiceType(qType: string) {
+  return isType(qType, ["multi"]);
+}
+
+function isTrueFalseType(qType: string) {
+  return isType(qType, ["judge"]);
+}
+
+function isFillBlankType(qType: string) {
+  return isType(qType, ["fill"]);
+}
+
+function isEssayType(qType: string) {
+  return isType(qType, ["essay"]);
+}
+
+function getTypeLabelZh(qType: string) {
+  const t = normalizeType(qType);
+  if (t === "single") return "单选题";
+  if (t === "multi") return "多选题";
+  if (t === "judge") return "判断题";
+  if (t === "fill") return "填空题";
+  if (t === "essay") return "解答题";
+  return "题目";
+}
+
+function getHandwritePartLabels(question?: Question | null) {
+  if (!question) return ["1"];
+  if (isFillBlankType(question.type)) {
+    const count = question.blanksCount || 1;
+    return Array.from({ length: count }, (_, i) => String(i + 1));
+  }
+
+  const matches = (question.content || "").match(/\d+\s*[).、]/g) || [];
+  if (matches.length > 0) {
+    return matches.map((_, idx) => String(idx + 1));
+  }
+  return ["1", "2", "3"];
 }
 
 interface StrokePoint {
@@ -299,21 +307,18 @@ function drawStrokePath(
   ctx.restore();
 }
 
-const TYPE_COLORS: Record<
-  QuestionType,
-  { bg: string; text: string }
-> = {
-  单选题: { bg: "#e5e5f9", text: "#7075ef" },
-  多选题: { bg: "#fff7e6", text: "#d46b08" },
-  判断题: { bg: "#e6fffb", text: "#08979c" },
-  填空题: { bg: "#e6f7ff", text: "#096dd9" },
-  解答题: { bg: "#fff0f6", text: "#c41d7f" },
+const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  single: { bg: "#e5e5f9", text: "#7075ef" },
+  multi: { bg: "#fff7e6", text: "#d46b08" },
+  judge: { bg: "#e6fffb", text: "#08979c" },
+  fill: { bg: "#e6f7ff", text: "#096dd9" },
+  essay: { bg: "#fff0f6", text: "#c41d7f" },
 };
 
-const DIFF_COLORS: Record<
-  string,
-  { bg: string; text: string }
-> = {
+const DIFF_COLORS: Record<string, { bg: string; text: string }> = {
+  easy: { bg: "#f6ffed", text: "#389e0d" },
+  medium: { bg: "#fff7e6", text: "#d46b08" },
+  hard: { bg: "#fff1f0", text: "#cf1322" },
   简单: { bg: "#f6ffed", text: "#389e0d" },
   中等: { bg: "#fff7e6", text: "#d46b08" },
   困难: { bg: "#fff1f0", text: "#cf1322" },
@@ -342,7 +347,7 @@ const GeometryShapes = () => {
           </span>
           <div className="h-[99px] relative shrink-0 w-[77px] overflow-hidden">
             <img
-              alt={`图形${label}`}
+              alt={`鍥惧舰${label}`}
               className="absolute h-full max-w-none top-0"
               style={{ left, width: "998.7%" }}
               src={imgGeometry}
@@ -562,15 +567,15 @@ function QuestionPanel({
   isSubmitted,
   isRevealed,
 }: QuestionPanelProps) {
-  const tc = TYPE_COLORS[question.type];
-  const dc = DIFF_COLORS[question.difficulty];
+  const tc =
+    TYPE_COLORS[normalizeType(question.type)] || TYPE_COLORS.single;
   const showAnswer = isSubmitted || isRevealed;
 
   return (
     <div className="bg-white flex-1 h-full rounded-[24px] overflow-hidden flex flex-col">
       <div className="flex flex-col gap-[24px] p-[24px] h-full overflow-y-auto">
         {/* Type badge + difficulty */}
-        <div className="flex items-center justify-between shrink-0">
+        <div className="flex items-center shrink-0">
           <div
             className="px-[11px] py-[4px] rounded-[4px] text-[16px]"
             style={{
@@ -579,18 +584,7 @@ function QuestionPanel({
               fontWeight: 500,
             }}
           >
-            {question.type}
-          </div>
-          <div className="flex items-center gap-[8px]">
-            <div
-              className="px-[10px] py-[3px] rounded-[20px] text-[12px]"
-              style={{ backgroundColor: dc.bg, color: dc.text }}
-            >
-              {question.difficulty}
-            </div>
-            <span className="text-[#a8abb2] text-[13px]">
-              {question.subject}
-            </span>
+            {getTypeLabelZh(question.type)}
           </div>
         </div>
 
@@ -677,66 +671,276 @@ function ErrorCauseSection({
   selectedCauses: string[];
   onToggle: (cause: string) => void;
 }) {
+  const [customCauses, setCustomCauses] = useState<string[]>([]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalSelected, setModalSelected] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState("");
+  const [otherRecord, setOtherRecord] = useState("");
+
+  const allCauses = [...ERROR_CAUSES, ...customCauses];
+
+  const openModal = () => {
+    const extra = selectedCauses.filter(
+      (cause) => !ERROR_CAUSES.includes(cause),
+    );
+    if (extra.length) {
+      setCustomCauses((prev) =>
+        Array.from(new Set([...prev, ...extra])),
+      );
+    }
+    setModalSelected(selectedCauses);
+    setShowModal(true);
+  };
+
+  const toggleModalCause = (cause: string) => {
+    setModalSelected((prev) =>
+      prev.includes(cause)
+        ? prev.filter((c) => c !== cause)
+        : [...prev, cause],
+    );
+  };
+
+  const addCustomCause = () => {
+    const text = customInput.trim().slice(0, 6);
+    if (!text) return;
+    if (!allCauses.includes(text)) {
+      setCustomCauses((prev) => [...prev, text]);
+    }
+    if (!modalSelected.includes(text)) {
+      setModalSelected((prev) => [...prev, text]);
+    }
+    setCustomInput("");
+  };
+
+  const saveModal = () => {
+    const prevSet = new Set(selectedCauses);
+    const nextSet = new Set(modalSelected);
+    const all = Array.from(new Set([...selectedCauses, ...modalSelected]));
+    all.forEach((cause) => {
+      const oldVal = prevSet.has(cause);
+      const newVal = nextSet.has(cause);
+      if (oldVal !== newVal) onToggle(cause);
+    });
+    setShowModal(false);
+  };
+
   return (
-    <div className="bg-white w-full shrink-0 flex items-center justify-between p-[16px]">
-      <span
-        className="text-[#414559] text-[18px] shrink-0"
-        style={{ fontWeight: 600 }}
-      >
-        错因记录
-      </span>
-      <div className="flex items-center gap-[4px] overflow-hidden">
-        {ERROR_CAUSES.map((cause) => {
-          const isActive = selectedCauses.includes(cause);
-          return (
-            <button
-              key={cause}
-              onClick={() => onToggle(cause)}
-              className="px-[12px] h-[32px] rounded-[99px] text-[14px] shrink-0 transition-all"
+    <>
+      <div className="bg-white w-full shrink-0 flex items-center justify-between p-[16px]">
+        <span
+          className="text-[#414559] text-[18px] shrink-0"
+          style={{ fontWeight: 600 }}
+        >
+          {"\u9519\u56e0\u8bb0\u5f55"}
+        </span>
+        <div className="flex items-center gap-[6px] overflow-hidden">
+          {ERROR_CAUSES.map((cause) => {
+            const active = selectedCauses.includes(cause);
+            return (
+              <button
+                key={cause}
+                onClick={() => onToggle(cause)}
+                className="px-[12px] h-[32px] rounded-[99px] text-[14px] shrink-0"
+                style={{
+                  background: active ? "#7075ef" : "#ffffff",
+                  color: active ? "#ffffff" : "#6b7280",
+                  border: active ? "1px solid #7075ef" : "1px solid #e6e8f2",
+                }}
+              >
+                {cause}
+              </button>
+            );
+          })}
+          <button
+            onClick={openModal}
+            className="flex items-center gap-[4px] px-[12px] h-[34px] rounded-[99px] text-[14px] text-[#5f6480] shrink-0 transition-all"
+            style={{
+              background: "#f4f5ff",
+              border: "1px solid #e7e9ff",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 3V13"
+                stroke="#6B7280"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.33333"
+              />
+              <path
+                d="M3 8H13"
+                stroke="#6B7280"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.33333"
+              />
+            </svg>
+            {"\u81ea\u5b9a\u4e49"}
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/35 z-40"
+              onClick={() => setShowModal(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white"
               style={{
-                background: isActive ? "#7075ef" : "white",
-                color: isActive ? "white" : "#6b7280",
-                border: isActive ? "none" : "1px solid #f3f4f6",
-                fontFamily: "sans-serif",
+                width: "min(840px, 92vw)",
+                borderRadius: "28px",
+                padding: "20px 28px 24px",
+                boxShadow: "0 18px 60px rgba(51,61,127,0.22)",
               }}
             >
-              {cause}
-            </button>
-          );
-        })}
-        {/* Custom */}
-        <button
-          className="flex items-center gap-[4px] px-[12px] h-[32px] rounded-[99px] text-[14px] text-[#6b7280] shrink-0 transition-all hover:bg-[#f9f9f9]"
-          style={{
-            background: "white",
-            border: "1px solid #f3f4f6",
-          }}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              d={svgPaths2.p10602900}
-              stroke="#6B7280"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.33333"
-            />
-            <path
-              d="M3.33333 8H12.6667"
-              stroke="#6B7280"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.33333"
-            />
-          </svg>
-          自定义
-        </button>
-      </div>
-    </div>
+              <div className="relative flex items-center justify-center mb-[14px]">
+                <h3
+                  className="text-[42px] text-[#2f3340]"
+                  style={{ fontWeight: 600, lineHeight: 1.1 }}
+                >
+                  {"\u9519\u56e0\u8bb0\u5f55"}
+                </h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-[36px] h-[36px] rounded-full hover:bg-[#f4f5ff] flex items-center justify-center"
+                >
+                  <X className="w-[22px] h-[22px] text-[#2f3340]" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-[10px] mb-[10px]">
+                <div className="w-[44px] h-[44px] rounded-[14px] bg-[#f7ead6] flex items-center justify-center">
+                  <Tag className="w-[24px] h-[24px] text-[#f37a20]" />
+                </div>
+                <div
+                  className="text-[32px] text-[#2f3340]"
+                  style={{ fontWeight: 600 }}
+                >
+                  {"\u9519\u56e0\u6807\u8bb0\uff08\u53ef\u591a\u9009\uff09"}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-[10px] mb-[16px]">
+                {allCauses.map((cause) => {
+                  const active = modalSelected.includes(cause);
+                  return (
+                    <button
+                      key={cause}
+                      onClick={() => toggleModalCause(cause)}
+                      className="h-[46px] px-[20px] rounded-[999px] text-[14px]"
+                      style={{
+                        background: active ? "#6f75f4" : "#ffffff",
+                        color: active ? "#ffffff" : "#6f7688",
+                        border: active
+                          ? "1px solid #6f75f4"
+                          : "1px solid #e5e7ee",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {cause}
+                    </button>
+                  );
+                })}
+
+                <div
+                  className="h-[46px] px-[14px] rounded-[999px] flex items-center"
+                  style={{
+                    background: "#f0f1ff",
+                    border: "1px solid #e3e5ff",
+                  }}
+                >
+                  <input
+                    value={customInput}
+                    onChange={(e) =>
+                      setCustomInput(e.target.value.slice(0, 6))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") addCustomCause();
+                    }}
+                    onBlur={addCustomCause}
+                    placeholder={"\u6700\u591a6\u5b57"}
+                    className="w-[110px] text-[14px] outline-none bg-transparent text-[#7d84f4] placeholder:text-[#adb3ff]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-[10px] mb-[10px]">
+                <div className="w-[44px] h-[44px] rounded-[14px] bg-[#d9e7fb] flex items-center justify-center">
+                  <PencilLine className="w-[24px] h-[24px] text-[#3d7cec]" />
+                </div>
+                <div
+                  className="text-[32px] text-[#2f3340]"
+                  style={{ fontWeight: 600 }}
+                >
+                  {"\u5176\u4ed6\u8bb0\u5f55"}
+                </div>
+              </div>
+
+              <div
+                className="rounded-[16px] p-[12px]"
+                style={{
+                  border: "1px solid #eceef5",
+                  background: "#f9fafc",
+                }}
+              >
+                <textarea
+                  value={otherRecord}
+                  onChange={(e) =>
+                    setOtherRecord(e.target.value.slice(0, 400))
+                  }
+                  placeholder={"\u8bf7\u8f93\u5165\u9519\u56e0\u8865\u5145\u8bf4\u660e"}
+                  className="w-full h-[110px] resize-none bg-transparent outline-none text-[14px] text-[#363b47] leading-[1.6]"
+                />
+                <div className="flex items-center justify-between mt-[10px]">
+                  <div className="flex items-center gap-[18px] text-[#53576d]">
+                    <ImageIcon className="w-[22px] h-[22px]" />
+                    <Mic className="w-[22px] h-[22px]" />
+                    <Video className="w-[22px] h-[22px]" />
+                  </div>
+                  <span className="text-[14px] text-[#b9bec9]">
+                    {otherRecord.length} / 400
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-[16px] mt-[18px]">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 h-[54px] rounded-[999px] text-[16px]"
+                  style={{
+                    background: "#f1f2f6",
+                    color: "#6f7484",
+                    fontWeight: 500,
+                  }}
+                >
+                  {"\u53d6\u6d88"}
+                </button>
+                <button
+                  onClick={saveModal}
+                  className="flex-1 h-[54px] rounded-[999px] text-[16px] text-white"
+                  style={{
+                    background: "#6f75f4",
+                    fontWeight: 500,
+                  }}
+                >
+                  {"\u4fdd\u5b58"}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -749,8 +953,10 @@ interface AnswerPanelProps {
   isSubmitted: boolean;
   isRevealed: boolean;
   isLast: boolean;
+  showConfirmButton?: boolean;
   selectedCauses: string[];
   confirmed: boolean;
+  manualJudges?: Record<number, "correct" | "wrong">;
   onSelectOption: (label: string) => void;
   onFillBlank: (idx: number, val: string) => void;
   onEssayChange: (val: string) => void;
@@ -760,64 +966,61 @@ interface AnswerPanelProps {
   onFinish: () => void;
   onToggleCause: (cause: string) => void;
   onConfirm: () => void;
+  onManualJudge: (
+    partIndex: number,
+    value: "correct" | "wrong",
+  ) => void;
 }
 
-function AnswerPanel({
-  question,
-  userAnswer,
-  fillBlanks,
-  essayText,
-  isSubmitted,
-  isRevealed,
-  isLast,
-  selectedCauses,
-  confirmed,
-  onSelectOption,
-  onFillBlank,
-  onEssayChange,
-  onSubmit,
-  onReveal,
-  onNext,
-  onFinish,
-  onToggleCause,
-  onConfirm,
-}: AnswerPanelProps) {
+function AnswerPanelV3(props: AnswerPanelProps) {
+  const {
+    question,
+    userAnswer,
+    fillBlanks,
+    essayText,
+    isSubmitted,
+    isRevealed,
+    isLast,
+    selectedCauses,
+    confirmed,
+    manualJudges,
+    onSelectOption,
+    onFillBlank,
+    onEssayChange,
+    onSubmit,
+    onReveal,
+    onNext,
+    onFinish,
+    onToggleCause,
+    onConfirm,
+    onManualJudge,
+  } = props;
+
   const showResult = isSubmitted || isRevealed;
+  const isHandwriteQuestion =
+    isFillBlankType(question.type) || isEssayType(question.type);
+  const partLabels = getHandwritePartLabels(question);
+  const judgeEntries = manualJudges || {};
+  const allJudged =
+    isHandwriteQuestion && partLabels.every((_, idx) => !!judgeEntries[idx]);
+  const hasWrongJudge = Object.values(judgeEntries).includes("wrong");
   const isAnswerable =
-    question.type !== "解答题"
-      ? (Array.isArray(userAnswer)
+    isEssayType(question.type)
+      ? essayText.trim().length > 10
+      : isFillBlankType(question.type)
+        ? fillBlanks.some((b) => b.trim())
+        : Array.isArray(userAnswer)
           ? userAnswer.length > 0
-          : !!userAnswer) ||
-        (question.type === "填空题" &&
-          fillBlanks.some((b) => b.trim()))
-      : essayText.trim().length > 10;
-
-  // Determine if user got it right — wrong answers and revealed answers need 错因记录
-  const isAnswerCorrect = (() => {
-    if (
-      !isSubmitted ||
-      isRevealed ||
-      question.type === "解答题"
-    )
-      return false;
-    if (question.type === "填空题") {
-      const corrects = question.correctAnswer as string[];
-      return corrects.every((c, i) =>
-        checkBlankCorrect(c, fillBlanks[i] || ""),
-      );
-    }
-    return !!userAnswer && checkIsCorrect(question, userAnswer);
-  })();
-
-  // Only show 错因记录 when answer is wrong or revealed
-  const showErrorCause = showResult && !isAnswerCorrect;
+          : !!userAnswer;
+  const showErrorCause =
+    showResult &&
+    (isRevealed || (isHandwriteQuestion ? hasWrongJudge : false));
 
   return (
     <div
       className="bg-white shrink-0 h-full rounded-[24px] overflow-hidden flex flex-col"
       style={{ width: "677.6px" }}
     >
-      {/* 错因记录 section - only after submit */}
       <AnimatePresence>
         {showErrorCause && (
           <motion.div
@@ -836,10 +1039,9 @@ function AnswerPanel({
         )}
       </AnimatePresence>
 
-      {/* Main answer input area */}
       <div className="flex-1 overflow-y-auto p-[16px]">
-        {(question.type === "单选题" ||
-          question.type === "多选题") && (
+        {(isSingleChoiceType(question.type) ||
+          isMultiChoiceType(question.type)) && (
           <ChoiceOptions
             question={question}
             userAnswer={userAnswer}
@@ -848,7 +1050,7 @@ function AnswerPanel({
             onSelect={onSelectOption}
           />
         )}
-        {question.type === "判断题" && (
+        {isTrueFalseType(question.type) && (
           <TrueFalseOptions
             userAnswer={userAnswer}
             isSubmitted={isSubmitted}
@@ -857,25 +1059,28 @@ function AnswerPanel({
             onSelect={onSelectOption}
           />
         )}
-        {question.type === "填空题" && (
+        {isFillBlankType(question.type) && (
           <FillBlankInputs
             question={question}
             fillBlanks={fillBlanks}
             isSubmitted={isSubmitted}
             isRevealed={isRevealed}
+            manualJudges={manualJudges}
+            onManualJudge={onManualJudge}
             onChange={onFillBlank}
           />
         )}
-        {question.type === "解答题" && (
+        {isEssayType(question.type) && (
           <EssayInput
             value={essayText}
             isSubmitted={isSubmitted}
+            isRevealed={isRevealed}
+            judge={manualJudges?.[0]}
+            onManualJudge={(value) => onManualJudge(0, value)}
             onChange={onEssayChange}
           />
         )}
       </div>
-
-      {/* Bottom bar */}
       <div className="shrink-0 px-[16px] pb-[16px]">
         {!showResult ? (
           <div className="flex items-center justify-between">
@@ -883,31 +1088,43 @@ function AnswerPanel({
               onClick={onReveal}
               className="text-[#8286ef] text-[15px] hover:opacity-70 transition-opacity"
             >
-              不会做，
-              <span className="underline">查看答案</span>？
+              不会做，<span className="underline">查看答案</span>
             </button>
             <button
               onClick={onSubmit}
               disabled={!isAnswerable}
               className="px-[32px] py-[12px] rounded-[9999px] text-white text-[16px] transition-all"
               style={{
-                background: isAnswerable
-                  ? "#7075ef"
-                  : "#c2c5ff",
+                background: isAnswerable ? "#6672ff" : "#d8dbff",
                 boxShadow: isAnswerable
-                  ? "0px 4px 12px rgba(112,117,239,0.4)"
+                  ? "0px 12px 28px rgba(102,114,255,0.45)"
                   : "none",
-                cursor: isAnswerable
-                  ? "pointer"
-                  : "not-allowed",
+                cursor: isAnswerable ? "pointer" : "not-allowed",
               }}
             >
               提交
             </button>
           </div>
+        ) : isHandwriteQuestion ? (
+          <div className="flex items-center justify-end gap-[16px]">
+            {allJudged && (
+              <button
+                onClick={isLast ? "批改完成，完成练习" : "批改完成，下一题"}
+                className="px-[32px] py-[14px] rounded-[999px] text-white text-[16px]"
+                style={{
+                  background: "#7075ef",
+                  boxShadow:
+                    "0px 8px 20px rgba(112,117,239,0.22)",
+                  minWidth: "184px",
+                }}
+              >
+                {isLast ? "批改完成，完成练习" : "批改完成，下一题"}
+              </button>
+            )}
+          </div>
         ) : (
           <div className="flex items-center justify-end gap-[24px]">
-            {/* 确认掌握 */}
+            {showConfirmButton && (
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: confirmed ? 1 : 0.6 }}
@@ -921,12 +1138,7 @@ function AnswerPanel({
                 color: confirmed ? "#389e0d" : "#bdbdbd",
               }}
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 18 18"
-                fill="none"
-              >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path
                   d={svgPaths2.p1874e200}
                   stroke={confirmed ? "#389e0d" : "#BDBDBD"}
@@ -937,8 +1149,7 @@ function AnswerPanel({
               </svg>
               确认掌握
             </motion.button>
-
-            {/* 下一题 / 完成 */}
+            )}
             {isLast ? (
               <button
                 onClick={onFinish}
@@ -987,13 +1198,12 @@ function ChoiceOptions({
   isRevealed: boolean;
   onSelect: (label: string) => void;
 }) {
-  const isMulti = question.type === "多选题";
+  const isMulti = isMultiChoiceType(question.type);
   return (
     <div className="flex flex-col gap-[12px]">
       {isMulti && !isSubmitted && !isRevealed && (
         <p className="text-[#a8abb2] text-[13px]">
-          多选题，请选择所有正确答案
-        </p>
+          澶氶€夐锛岃閫夋嫨鎵€鏈夋纭瓟妗?        </p>
       )}
       <div className="content-start flex flex-wrap gap-[24px] items-start">
         {question.options!.map((opt) => {
@@ -1105,8 +1315,8 @@ function TrueFalseOptions({
   onSelect: (label: string) => void;
 }) {
   const opts = [
-    { label: "true", icon: "✓", text: "正确" },
-    { label: "false", icon: "✗", text: "错误" },
+    { label: "true", icon: "?", text: "??" },
+    { label: "false", icon: "?", text: "??" },
   ];
 
   return (
@@ -1156,23 +1366,46 @@ function HandwriteBoard({
   open,
   title,
   fullHeight,
+  guideLabels,
+  initialImage,
   onClose,
   onConfirm,
 }: {
   open: boolean;
   title: string;
   fullHeight?: boolean;
+  guideLabels?: string[];
+  initialImage?: string;
   onClose: () => void;
   onConfirm: (img: string) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const baseImageRef = useRef<HTMLImageElement | null>(null);
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [redoStrokes, setRedoStrokes] = useState<Stroke[]>([]);
   const [isErasing, setIsErasing] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const currentStroke = useRef<Stroke | null>(null);
+  const drawBaseImage = (
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+  ) => {
+    if (!baseImageRef.current) return;
+    const img = baseImageRef.current;
+    const sourceW = img.naturalWidth || img.width;
+    const sourceH = img.naturalHeight || img.height;
+    if (!sourceW || !sourceH) return;
+
+    // Keep original handwriting proportions and avoid upscaling on re-open.
+    const scale = Math.min(canvasWidth / sourceW, canvasHeight / sourceH, 1);
+    const drawW = sourceW * scale;
+    const drawH = sourceH * scale;
+    const drawX = (canvasWidth - drawW) / 2;
+    const drawY = (canvasHeight - drawH) / 2;
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+  };
 
   const redraw = (nextStrokes: Stroke[]) => {
     const canvas = canvasRef.current;
@@ -1180,7 +1413,8 @@ function HandwriteBoard({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    nextStrokes.forEach((s) => drawStrokePath(ctx, s, "#111111", 3));
+    drawBaseImage(ctx, canvas.width, canvas.height);
+    nextStrokes.forEach((s) => drawStrokePath(ctx, s, "#111111", s.erase ? 22 : 3));
   };
 
   useEffect(() => {
@@ -1191,8 +1425,22 @@ function HandwriteBoard({
     const rect = box.getBoundingClientRect();
     canvas.width = Math.max(1, Math.floor(rect.width));
     canvas.height = Math.max(1, Math.floor(rect.height));
-    redraw(strokes);
-  }, [open, isFullscreen]);
+    setStrokes([]);
+    setRedoStrokes([]);
+    baseImageRef.current = null;
+
+    if (!initialImage) {
+      redraw([]);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      baseImageRef.current = img;
+      redraw([]);
+    };
+    img.src = initialImage;
+  }, [open, fullHeight, initialImage]);
 
   const pointFromEvent = (
     e: React.PointerEvent<HTMLCanvasElement>,
@@ -1208,6 +1456,7 @@ function HandwriteBoard({
     currentStroke.current = stroke;
     setDrawing(true);
     setRedoStrokes([]);
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -1218,7 +1467,7 @@ function HandwriteBoard({
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     redraw(strokes);
-    drawStrokePath(ctx, currentStroke.current, "#111111", 3);
+    drawStrokePath(ctx, currentStroke.current, "#111111", currentStroke.current.erase ? 22 : 3);
   };
 
   const endStroke = () => {
@@ -1261,92 +1510,179 @@ function HandwriteBoard({
       onConfirm("");
       return;
     }
-    onConfirm(canvas.toDataURL("image/png"));
+
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = canvas.width;
+    exportCanvas.height = canvas.height;
+    const exportCtx = exportCanvas.getContext("2d");
+
+    if (!exportCtx) {
+      onConfirm(canvas.toDataURL("image/png"));
+      return;
+    }
+
+    drawBaseImage(exportCtx, exportCanvas.width, exportCanvas.height);
+
+    strokes.forEach((s) =>
+      drawStrokePath(exportCtx, s, "#111111", s.erase ? 22 : 3),
+    );
+
+    const imageData = exportCtx.getImageData(
+      0,
+      0,
+      exportCanvas.width,
+      exportCanvas.height,
+    );
+    const { data, width, height } = imageData;
+
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const alpha = data[(y * width + x) * 4 + 3];
+        if (alpha > 0) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) {
+      onConfirm(initialImage || "");
+      return;
+    }
+
+    const padding = 8;
+    const cropX = Math.max(0, minX - padding);
+    const cropY = Math.max(0, minY - padding);
+    const cropW = Math.min(width - cropX, maxX - minX + padding * 2 + 1);
+    const cropH = Math.min(height - cropY, maxY - minY + padding * 2 + 1);
+
+    const trimmedCanvas = document.createElement("canvas");
+    trimmedCanvas.width = cropW;
+    trimmedCanvas.height = cropH;
+    const trimmedCtx = trimmedCanvas.getContext("2d");
+
+    if (!trimmedCtx) {
+      onConfirm(canvas.toDataURL("image/png"));
+      return;
+    }
+
+    trimmedCtx.drawImage(
+      exportCanvas,
+      cropX,
+      cropY,
+      cropW,
+      cropH,
+      0,
+      0,
+      cropW,
+      cropH,
+    );
+
+    onConfirm(trimmedCanvas.toDataURL("image/png"));
   };
 
+  const toolBtnClass =
+    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all";
+  const getToolBtnStyle = (
+    active?: boolean,
+    danger?: boolean,
+  ): React.CSSProperties => ({
+    background: active ? "#e7e5ff" : "#ffffff",
+    color: danger ? "#ff5c5c" : active ? "#6f75f4" : "#b7bcf7",
+    boxShadow: active
+      ? "0 8px 18px rgba(111,117,244,0.18)"
+      : "none",
+  });
+
+  if (!open) return null;
+  const guides =
+    guideLabels && guideLabels.length > 0
+      ? guideLabels
+      : ["1", "2", "3"];
+
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/20"
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      className="h-full rounded-[24px] bg-white border border-[#edf0ff] p-[12px]"
+    >
+      <div
+        ref={boxRef}
+        className="relative h-full rounded-[20px] border border-[#edf0ff] bg-white overflow-hidden"
+        style={{ minHeight: fullHeight ? 520 : 420 }}
+      >
+        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] shadow-[0_10px_24px_rgba(111,117,244,0.12)]">
+          <button type="button" onClick={handleUndo} className={toolBtnClass} style={getToolBtnStyle(false)} title="??">
+            <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+          </button>
+          <button type="button" onClick={handleRedo} className={toolBtnClass} style={getToolBtnStyle(false)} title="????">
+            <Redo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+          </button>
+          <button type="button" onClick={() => setIsErasing(true)} className={toolBtnClass} style={getToolBtnStyle(isErasing)} title="???">
+            <Eraser className="w-[22px] h-[22px]" strokeWidth={1.8} />
+          </button>
+          <button type="button" onClick={() => setIsErasing(false)} className={toolBtnClass} style={getToolBtnStyle(!isErasing)} title="??">
+            <PenLine className="w-[22px] h-[22px]" strokeWidth={1.8} />
+          </button>
+          <button type="button" onClick={handleClear} className={toolBtnClass} style={getToolBtnStyle(false)} title="??">
+            <Trash2 className="w-[22px] h-[22px]" strokeWidth={1.8} />
+          </button>
+          <div className="w-px h-[34px] bg-[#e4e7ff]" />
+          <button type="button" onClick={onClose} className={toolBtnClass} style={getToolBtnStyle(false, true)} title="??">
+            <X className="w-[22px] h-[22px]" strokeWidth={2} />
+          </button>
+          <button
+            type="button"
             onClick={handleConfirm}
-          />
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="fixed z-50 bg-white rounded-[16px] border border-[#e7e9ff] overflow-hidden"
-            style={
-              isFullscreen
-                ? {
-                    top: 56,
-                    right: 24,
-                    bottom: 24,
-                    left: "50%",
-                    width: "calc(50% - 24px)",
-                  }
-                : {
-                    right: 24,
-                    top: 96,
-                    width: 620,
-                    height: fullHeight ? 620 : 360,
-                  }
-            }
+            className={toolBtnClass}
+            style={{
+              background: "#e7e5ff",
+              color: "#6f75f4",
+              boxShadow: "0 8px 18px rgba(111,117,244,0.18)",
+            }}
+            title="??"
           >
-            <div className="h-[44px] px-[12px] bg-[#f4f5ff] flex items-center justify-between">
-              <span className="text-[14px] text-[#4e548c]">{title}</span>
-              <button
-                onClick={() => setIsFullscreen((v) => !v)}
-                className="w-[20px] h-[20px] text-[#9aa0b6] hover:text-[#6f748d] transition-colors"
-                title="全屏"
-              >
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M8 3H3V8M16 3H21V8M3 16V21H8M21 16V21H16"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="p-[12px] h-[calc(100%-44px)] flex flex-col gap-[10px]">
+            <Check className="w-[22px] h-[22px]" strokeWidth={2.2} />
+          </button>
+        </div>
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full block touch-none"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={endStroke}
+          onPointerLeave={endStroke}
+        />
+        <div className="absolute inset-0 pointer-events-none px-[16px] py-[14px] z-0">
+          <div className="h-full flex flex-col">
+            {guides.map((g, idx) => (
               <div
-                ref={boxRef}
-                className="flex-1 rounded-[12px] border border-[#e4e7ff] bg-white overflow-hidden"
+                key={g + idx}
+                className="flex-1 relative"
+                style={{
+                  borderBottom:
+                    idx === guides.length - 1
+                      ? "none"
+                      : "1px solid #e9ebf7",
+                }}
               >
-                <canvas
-                  ref={canvasRef}
-                  className="w-full h-full block touch-none"
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={endStroke}
-                  onPointerLeave={endStroke}
-                />
+                <span className="absolute left-[4px] top-[6px] text-[18px] text-[#3f4659]">
+                  {g}.
+                </span>
               </div>
-              <div className="h-[42px] rounded-[9999px] bg-[#f4f5ff] px-[10px] flex items-center justify-between text-[13px] text-[#586086]">
-                <div className="flex items-center gap-[8px]">
-                  <button onClick={handleUndo}>撤销</button>
-                  <button onClick={handleRedo}>反向撤销</button>
-                  <button onClick={() => setIsErasing(true)}>橡皮擦</button>
-                  <button onClick={() => setIsErasing(false)}>手写</button>
-                  <button onClick={handleClear}>清空</button>
-                </div>
-                <div className="flex items-center gap-[8px]">
-                  <button onClick={onClose}>关闭</button>
-                  <button onClick={handleConfirm}>确认</button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -1356,64 +1692,106 @@ function FillBlankInputs({
   fillBlanks,
   isSubmitted,
   isRevealed,
+  manualJudges,
+  onManualJudge,
   onChange,
 }: {
   question: Question;
   fillBlanks: string[];
   isSubmitted: boolean;
   isRevealed: boolean;
+  manualJudges?: Record<number, "correct" | "wrong">;
+  onManualJudge?: (idx: number, value: "correct" | "wrong") => void;
   onChange: (idx: number, val: string) => void;
 }) {
-  const count = question.blanksCount || 1;
-  const labels =
-    question.blanksLabels ||
-    Array.from({ length: count }, (_, i) => '?' + (i + 1) + '?');
+  const labels = getHandwritePartLabels(question);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const showJudge = isSubmitted || isRevealed;
+
+  if (editingIdx !== null) {
+    return (
+      <div className="h-full min-h-[560px]">
+        <HandwriteBoard
+          open
+          title={`第 ${labels[editingIdx]} 题`}
+          guideLabels={[labels[editingIdx]]}
+          initialImage={fillBlanks[editingIdx] || ""}
+          onClose={() => setEditingIdx(null)}
+          onConfirm={(img) => {
+            onChange(editingIdx, img);
+            setEditingIdx(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-[16px] mt-[8px]">
-      {Array.from({ length: count }).map((_, idx) => {
+    <div className="flex flex-col mt-[8px] rounded-[20px] overflow-hidden bg-white">
+      {labels.map((label, idx) => {
         const val = fillBlanks[idx] || "";
+        const judge = manualJudges?.[idx];
         return (
-          <div key={idx} className="flex flex-col gap-[6px]">
-            <label
-              className="text-[14px] text-[#606266]"
-              style={{ fontWeight: 500 }}
-            >
-              {labels[idx]} =
-            </label>
-            <div className="flex-1 relative">
-              <button
-                type="button"
-                onClick={() => !isSubmitted && !isRevealed && setEditingIdx(idx)}
-                disabled={isSubmitted || isRevealed}
-                className="w-full h-[56px] rounded-[12px] overflow-hidden transition-all text-left"
-                style={{ background: "#ffffff", border: "2px solid #e8e9ff" }}
-              >
-                {val ? (
-                  <img src={val} alt={"blank-" + (idx + 1)} className="w-full h-full object-contain" />
-                ) : (
-                  <span className="px-[16px] text-[14px] text-[#a8abb2]">????</span>
-                )}
-              </button>
-              {!(isSubmitted || isRevealed) && (
+          <div
+            key={idx}
+            className="flex items-stretch gap-[18px] px-[18px] py-[18px]"
+            style={{
+              borderTop: idx === 0 ? "none" : "1px solid #eceef8",
+            }}
+          >
+            <div className="w-[52px] shrink-0 pt-[8px] text-[22px] text-[#454b60]">
+              {label}
+            </div>
+            <div className="flex-1 relative min-h-[112px]">
+              <div className="flex items-stretch gap-[16px]">
                 <button
                   type="button"
-                  onClick={() => onChange(idx, "")}
-                  className="absolute right-[8px] top-[8px] w-[24px] h-[24px] rounded-full bg-[#f4f5ff] text-[#7c81a8] text-[12px]"
+                  onClick={() => !isSubmitted && !isRevealed && setEditingIdx(idx)}
+                  disabled={isSubmitted || isRevealed}
+                  className="flex-1 min-h-[112px] overflow-hidden transition-all text-left"
+                  style={{ background: "#ffffff", borderBottom: "2px solid #e8e9ff" }}
                 >
-                  ?
+                  {val ? (
+                    <div className="w-full h-full flex items-center justify-center px-[18px] py-[12px]">
+                      <img
+                        src={val}
+                        alt={"blank-" + (idx + 1)}
+                        className="max-w-[72%] max-h-[72%] object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <span className="px-[16px] text-[14px] text-[#a8abb2]">{"点击输入"}</span>
+                  )}
                 </button>
-              )}
-              <HandwriteBoard
-                open={editingIdx === idx}
-                title={"???? " + labels[idx]}
-                onClose={() => setEditingIdx(null)}
-                onConfirm={(img) => {
-                  onChange(idx, img);
-                  setEditingIdx(null);
-                }}
-              />
+                {showJudge && (
+                  <div className="w-[88px] shrink-0 flex flex-col gap-[12px] justify-center">
+                    <button
+                      type="button"
+                      onClick={() => onManualJudge?.(idx, "correct")}
+                      className="h-[52px] rounded-[999px] text-[16px] transition-all"
+                      style={{
+                        background: judge === "correct" ? "#eefad8" : "#f7f8fc",
+                        color: judge === "correct" ? "#86c73f" : "#b7bdc9",
+                        border: judge === "correct" ? "1px solid #d7efaf" : "1px solid #eff1f6",
+                      }}
+                    >
+                      {"对了"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onManualJudge?.(idx, "wrong")}
+                      className="h-[52px] rounded-[999px] text-[16px] transition-all"
+                      style={{
+                        background: judge === "wrong" ? "#fff2f0" : "#f7f8fc",
+                        color: judge === "wrong" ? "#ff7b67" : "#b7bdc9",
+                        border: judge === "wrong" ? "1px solid #ffd7d1" : "1px solid #eff1f6",
+                      }}
+                    >
+                      {"错了"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
@@ -1424,49 +1802,100 @@ function FillBlankInputs({
 
 // ============ ESSAY INPUT ============
 function EssayInput({
+  question,
   value,
   isSubmitted,
+  isRevealed,
+  judge,
+  onManualJudge,
   onChange,
 }: {
+  question: Question;
   value: string;
   isSubmitted: boolean;
+  isRevealed: boolean;
+  judge?: "correct" | "wrong";
+  onManualJudge?: (value: "correct" | "wrong") => void;
   onChange: (val: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const essayLabels = getHandwritePartLabels(question);
+
+  if (editing) {
+    return (
+      <div className="h-full min-h-[560px]">
+        <HandwriteBoard
+          open
+          title="第 1 题"
+          fullHeight
+          guideLabels={[essayLabels[0] || "1"]}
+          initialImage={value}
+          onClose={() => setEditing(false)}
+          onConfirm={(img) => {
+            onChange(img);
+            setEditing(false);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-[10px]" style={{ minHeight: "200px" }}>
-      <button
-        type="button"
-        onClick={() => !isSubmitted && setEditing(true)}
-        disabled={isSubmitted}
-        className="w-full rounded-[12px] overflow-hidden text-left"
-        style={{ background: "#ffffff", border: "2px solid #e8e9ff", minHeight: "420px" }}
-      >
-        {value ? (
-          <img src={value} alt="essay-handwriting" className="w-full h-[420px] object-contain" />
-        ) : (
-          <div className="w-full h-[420px] px-[16px] py-[14px] text-[#a8abb2] text-[14px]">????</div>
+      <div className="flex items-stretch gap-[16px]">
+        <button
+          type="button"
+          onClick={() => !isSubmitted && !isRevealed && setEditing(true)}
+          disabled={isSubmitted || isRevealed}
+          className="flex-1 rounded-[12px] overflow-hidden text-left"
+          style={{ background: "#ffffff", border: "2px solid #e8e9ff", minHeight: "420px" }}
+        >
+          {value ? (
+            <div className="w-full h-[420px] flex items-center justify-center px-[24px] py-[20px]">
+              <img src={value} alt="essay-handwriting" className="max-w-[78%] max-h-[78%] object-contain" />
+            </div>
+          ) : (
+            <div className="w-full h-[420px] px-[16px] py-[14px] text-[#a8abb2] text-[14px]">{"点击输入"}</div>
+          )}
+        </button>
+        {(isSubmitted || isRevealed) && (
+          <div className="w-[88px] shrink-0 flex flex-col gap-[12px] justify-center">
+            <button
+              type="button"
+              onClick={() => onManualJudge?.("correct")}
+              className="h-[52px] rounded-[999px] text-[16px] transition-all"
+              style={{
+                background: judge === "correct" ? "#eefad8" : "#f7f8fc",
+                color: judge === "correct" ? "#86c73f" : "#b7bdc9",
+                border: judge === "correct" ? "1px solid #d7efaf" : "1px solid #eff1f6",
+              }}
+            >
+              {"对了"}
+            </button>
+            <button
+              type="button"
+              onClick={() => onManualJudge?.("wrong")}
+              className="h-[52px] rounded-[999px] text-[16px] transition-all"
+              style={{
+                background: judge === "wrong" ? "#fff2f0" : "#f7f8fc",
+                color: judge === "wrong" ? "#ff7b67" : "#b7bdc9",
+                border: judge === "wrong" ? "1px solid #ffd7d1" : "1px solid #eff1f6",
+              }}
+            >
+              {"错了"}
+            </button>
+          </div>
         )}
-      </button>
-      {!isSubmitted && (
+      </div>
+      {!isSubmitted && !isRevealed && (
         <button
           type="button"
           onClick={() => onChange("")}
           className="self-end h-[32px] px-[14px] rounded-[999px] bg-[#f4f5ff] text-[#7f85a8] text-[13px]"
         >
-          ??
+          {"清空"}
         </button>
       )}
-      <HandwriteBoard
-        open={editing}
-        title="???????"
-        fullHeight
-        onClose={() => setEditing(false)}
-        onConfirm={(img) => {
-          onChange(img);
-          setEditing(false);
-        }}
-      />
     </div>
   );
 }
@@ -1527,8 +1956,7 @@ function DraftDrawer({
             </div>
             <div className="flex-1 p-[16px] flex flex-col gap-[12px]">
               <p className="text-[#a8abb2] text-[13px]">
-                在此处记录解题思路、草稿计算过程
-              </p>
+                请在此记录解题思路和草稿计算过程。              </p>
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -1582,7 +2010,13 @@ export function WrongQuestionReview() {
   const [confirmedMap, setConfirmedMap] = useState<
     Record<number, boolean>
   >({});
+  const [manualJudgeMap, setManualJudgeMap] = useState<
+    Record<number, Record<number, "correct" | "wrong">>
+  >({});
   const [showDraft, setShowDraft] = useState(false);
+  const [autoAdvancedMap, setAutoAdvancedMap] = useState<
+    Record<number, boolean>
+  >({});
 
   // ---- Derived ----
   const question = QUESTIONS[currentIndex];
@@ -1595,15 +2029,59 @@ export function WrongQuestionReview() {
   const essayText = essayMap[question.id] || "";
   const selectedCauses = errorCausesMap[question.id] || [];
   const isConfirmed = confirmedMap[question.id] || false;
+  const manualJudges = manualJudgeMap[question.id] || {};
   const isLast = currentIndex === QUESTIONS.length - 1;
+  const isCurrentHandwriteQuestion =
+    isFillBlankType(question.type) || isEssayType(question.type);
+  const isCurrentObjectiveCorrect =
+    isSubmitted &&
+    !isRevealed &&
+    !isCurrentHandwriteQuestion &&
+    checkIsCorrect(question, answers[question.id] ?? "");
+
+  useEffect(() => {
+    if (viewMode !== "quiz") return;
+    if (!isCurrentObjectiveCorrect) return;
+    if (isLast) return;
+    if (autoAdvancedMap[question.id]) return;
+
+    setAutoAdvancedMap((prev) => ({ ...prev, [question.id]: true }));
+    const timer = window.setTimeout(() => {
+      setCurrentIndex((idx) =>
+        idx < QUESTIONS.length - 1 ? idx + 1 : idx,
+      );
+    }, 520);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    viewMode,
+    isCurrentObjectiveCorrect,
+    isLast,
+    autoAdvancedMap,
+    question.id,
+  ]);
 
   // Compute per-question result status
   const questionResults = QUESTIONS.map((q) => {
     const isQ_Submitted = submitted[q.id] || false;
     const isQ_Revealed = revealed[q.id] || false;
+    const isQ_Manual = manualJudgeMap[q.id] || {};
     let isQ_Correct = false;
-    if (isQ_Submitted && !isQ_Revealed && q.type !== "解答题") {
-      if (q.type === "填空题") {
+
+    if (isFillBlankType(q.type) || isEssayType(q.type)) {
+      const partCount = getHandwritePartLabels(q).length;
+      const hasAllJudges =
+        partCount > 0 &&
+        Array.from({ length: partCount }).every(
+          (_, idx) => !!isQ_Manual[idx],
+        );
+      isQ_Correct =
+        isQ_Submitted &&
+        !isQ_Revealed &&
+        hasAllJudges &&
+        !Object.values(isQ_Manual).includes("wrong");
+    } else if (isQ_Submitted && !isQ_Revealed) {
+      if (isFillBlankType(q.type)) {
         const blanks = fillBlanksMap[q.id] || [];
         isQ_Correct = (q.correctAnswer as string[]).every(
           (c, i) => checkBlankCorrect(c, blanks[i] || ""),
@@ -1612,6 +2090,7 @@ export function WrongQuestionReview() {
         isQ_Correct = checkIsCorrect(q, answers[q.id] ?? "");
       }
     }
+
     return {
       index: QUESTIONS.indexOf(q),
       id: q.id,
@@ -1636,11 +2115,32 @@ export function WrongQuestionReview() {
   const handleSelectOption = (label: string) => {
     if (isSubmitted || isRevealed) return;
     if (
-      question.type === "单选题" ||
-      question.type === "判断题"
+      isSingleChoiceType(question.type) ||
+      isTrueFalseType(question.type)
     ) {
       setAnswers((prev) => ({ ...prev, [question.id]: label }));
-    } else if (question.type === "多选题") {
+    } else if (isMultiChoiceType(question.type)) {
+      const current = (answers[question.id] as string[]) || [];
+      const updated = current.includes(label)
+        ? current.filter((l) => l !== label)
+        : [...current, label];
+      setAnswers((prev) => ({
+        ...prev,
+        [question.id]: updated,
+      }));
+    }
+  };
+
+  const handleSelectOptionV2 = (label: string) => {
+    if (isSubmitted || isRevealed) return;
+    if (
+      isSingleChoiceType(question.type) ||
+      isTrueFalseType(question.type)
+    ) {
+      setAnswers((prev) => ({ ...prev, [question.id]: label }));
+      return;
+    }
+    if (isMultiChoiceType(question.type)) {
       const current = (answers[question.id] as string[]) || [];
       const updated = current.includes(label)
         ? current.filter((l) => l !== label)
@@ -1678,9 +2178,27 @@ export function WrongQuestionReview() {
   const handleSubmit = () =>
     setSubmitted((prev) => ({ ...prev, [question.id]: true }));
   const handleReveal = () => {
+    const revealJudges = Object.fromEntries(
+      getHandwritePartLabels(question).map((_, idx) => [idx, "wrong"]),
+    ) as Record<number, "wrong">;
     setRevealed((prev) => ({ ...prev, [question.id]: true }));
     setSubmitted((prev) => ({ ...prev, [question.id]: true }));
+    setManualJudgeMap((prev) => ({
+      ...prev,
+      [question.id]: revealJudges,
+    }));
   };
+  const handleManualJudge = (
+    partIndex: number,
+    value: "correct" | "wrong",
+  ) =>
+    setManualJudgeMap((prev) => ({
+      ...prev,
+      [question.id]: {
+        ...(prev[question.id] || {}),
+        [partIndex]: value,
+      },
+    }));
   const handlePrev = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
@@ -1696,6 +2214,13 @@ export function WrongQuestionReview() {
         questions={QUESTIONS}
         questionResults={questionResults}
         onGoToQuestion={(idx) => {
+          const targetQuestion = QUESTIONS[idx];
+          const targetWrongIdx = wrongQuestions.findIndex((wq) => wq.id === targetQuestion.id);
+          if (targetWrongIdx >= 0) {
+            setWrongDetailIdx(targetWrongIdx);
+            setViewMode("wrongDetail");
+            return;
+          }
           setCurrentIndex(idx);
           setViewMode("quiz");
         }}
@@ -1803,7 +2328,7 @@ export function WrongQuestionReview() {
             isSubmitted={wdSubmitted}
             isRevealed={wdRevealed}
           />
-          <AnswerPanel
+          <AnswerPanelV3
             question={wdQ}
             userAnswer={wdAnswer}
             fillBlanks={wdBlanks}
@@ -1811,8 +2336,10 @@ export function WrongQuestionReview() {
             isSubmitted={wdSubmitted}
             isRevealed={wdRevealed}
             isLast={wrongDetailIsLast}
+            showConfirmButton
             selectedCauses={wdCauses}
             confirmed={wdConfirmed}
+            manualJudges={manualJudgeMap[wdQ.id]}
             onSelectOption={() => {}}
             onFillBlank={() => {}}
             onEssayChange={() => {}}
@@ -1838,6 +2365,15 @@ export function WrongQuestionReview() {
               setConfirmedMap((prev) => ({
                 ...prev,
                 [wdQ.id]: !prev[wdQ.id],
+              }))
+            }
+            onManualJudge={(partIndex, value) =>
+              setManualJudgeMap((prev) => ({
+                ...prev,
+                [wdQ.id]: {
+                  ...(prev[wdQ.id] || {}),
+                  [partIndex]: value,
+                },
               }))
             }
           />
@@ -1870,7 +2406,7 @@ export function WrongQuestionReview() {
           isSubmitted={isSubmitted}
           isRevealed={isRevealed}
         />
-        <AnswerPanel
+        <AnswerPanelV3
           question={question}
           userAnswer={userAnswer}
           fillBlanks={fillBlanks}
@@ -1878,9 +2414,11 @@ export function WrongQuestionReview() {
           isSubmitted={isSubmitted}
           isRevealed={isRevealed}
           isLast={isLast}
+          showConfirmButton={false}
           selectedCauses={selectedCauses}
           confirmed={isConfirmed}
-          onSelectOption={handleSelectOption}
+          manualJudges={manualJudges}
+          onSelectOption={handleSelectOptionV2}
           onFillBlank={handleFillBlank}
           onEssayChange={(val) =>
             setEssayMap((prev) => ({
@@ -1899,6 +2437,7 @@ export function WrongQuestionReview() {
               [question.id]: !prev[question.id],
             }))
           }
+          onManualJudge={handleManualJudge}
         />
       </div>
       <DraftDrawer
@@ -1908,3 +2447,11 @@ export function WrongQuestionReview() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
