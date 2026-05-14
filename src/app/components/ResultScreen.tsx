@@ -40,18 +40,21 @@ function SemiGauge({ correct, total }: { correct: number; total: number }) {
   const progressX = cx + r * Math.cos(angle);
   const progressY = cy - r * Math.sin(angle);
 
-  const largeArc = ratio > 0.5 ? 1 : 0;
-  const arcEndX = progressX;
-  const arcEndY = progressY;
-
-  const progressPath = `M ${startX} ${startY} A ${r} ${r} 0 ${largeArc} 1 ${arcEndX} ${arcEndY}`;
-  const bgPath = `M ${startX} ${startY} A ${r} ${r} 0 1 1 ${endX} ${endY}`;
+  const semiPath = `M ${startX} ${startY} A ${r} ${r} 0 0 1 ${endX} ${endY}`;
+  const semiLength = Math.PI * r;
+  const progressLen = semiLength * Math.max(0, Math.min(1, ratio));
 
   return (
     <div className="relative w-[340px] h-[220px] mx-auto mt-[6px]">
       <svg width="340" height="220" viewBox="0 0 340 220" fill="none">
-        <path d={bgPath} stroke="#DFE2F5" strokeWidth="16" strokeLinecap="round" />
-        <path d={progressPath} stroke="#7B83E9" strokeWidth="16" strokeLinecap="round" />
+        <path d={semiPath} stroke="#DFE2F5" strokeWidth="16" strokeLinecap="round" />
+        <path
+          d={semiPath}
+          stroke="#7B83E9"
+          strokeWidth="16"
+          strokeLinecap="round"
+          strokeDasharray={`${progressLen} ${semiLength}`}
+        />
         <circle cx={progressX} cy={progressY} r="13" fill="#7B83E9" stroke="#ffffff" strokeWidth="6" />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-[22px]">

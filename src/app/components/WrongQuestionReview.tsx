@@ -486,7 +486,7 @@ function NavBar({
           className="text-[#33347c] text-[24px]"
           style={{ fontWeight: 600 }}
         >
-          错题复习
+          错题重刷
         </span>
       </button>
 
@@ -1647,7 +1647,7 @@ function HandwriteBoard({
   };
 
   const toolBtnClass =
-    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
+    "w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
   const getToolBtnStyle = (
     active?: boolean,
     danger?: boolean,
@@ -1678,25 +1678,25 @@ function HandwriteBoard({
         className="relative h-full rounded-[20px] bg-white overflow-hidden"
         style={{ minHeight: fullHeight ? 520 : 420 }}
       >
-        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8]">
+        <div className="absolute right-[18px] top-[18px] z-10 flex items-center gap-[8px] rounded-[999px] bg-white px-[12px] py-[6px] border border-[#e7e9f8]">
           <button type="button" onClick={handleUndo} disabled={!strokes.length} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length)} title="??">
-            <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+            <Undo2 className="w-[19px] h-[19px]" strokeWidth={1.8} />
           </button>
           <button type="button" onClick={handleRedo} disabled={!redoStrokes.length} className={toolBtnClass} style={getToolBtnStyle(!!redoStrokes.length, false, !redoStrokes.length)} title="????">
-            <Redo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+            <Redo2 className="w-[19px] h-[19px]" strokeWidth={1.8} />
           </button>
           <button type="button" onClick={() => setIsErasing(true)} className={toolBtnClass} style={getToolBtnStyle(isErasing)} title="???">
-            <Eraser className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            <Eraser className="w-[18px] h-[18px]" strokeWidth={1.8} />
           </button>
           <button type="button" onClick={() => setIsErasing(false)} className={toolBtnClass} style={getToolBtnStyle(!isErasing)} title="??">
-            <PenLine className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            <PenLine className="w-[18px] h-[18px]" strokeWidth={1.8} />
           </button>
           <button type="button" onClick={handleClear} disabled={!strokes.length && !baseImageRef.current} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length && !baseImageRef.current)} title="??">
-            <Trash2 className="w-[22px] h-[22px]" strokeWidth={1.8} />
+            <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.8} />
           </button>
-          <div className="w-px h-[34px] bg-[#e4e7ff]" />
+          <div className="w-px h-[28px] bg-[#e4e7ff]" />
           <button type="button" onClick={onClose} className={toolBtnClass} style={getToolBtnStyle(false, true)} title="??">
-            <X className="w-[22px] h-[22px]" strokeWidth={2} />
+            <X className="w-[18px] h-[18px]" strokeWidth={2} />
           </button>
           <button
             type="button"
@@ -1709,7 +1709,7 @@ function HandwriteBoard({
             }}
             title="??"
           >
-            <Check className="w-[22px] h-[22px]" strokeWidth={2.2} />
+            <Check className="w-[18px] h-[18px]" strokeWidth={2.2} />
           </button>
         </div>
         <canvas
@@ -1766,6 +1766,12 @@ function FillBlankInputs({
   const labels = getHandwritePartLabels(question);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const showJudge = isSubmitted || isRevealed;
+
+  useEffect(() => {
+    if (isSubmitted || isRevealed) {
+      setEditingIdx(null);
+    }
+  }, [isSubmitted, isRevealed]);
 
   if (editingIdx !== null) {
     return (
@@ -1825,7 +1831,7 @@ function FillBlankInputs({
                       />
                     </div>
                   ) : (
-                    <span className="px-[16px] text-[14px] text-[#a8abb2]">{"点击输入"}</span>
+                    <span />
                   )}
                 </button>
                 {showJudge && (
@@ -1896,6 +1902,12 @@ function EssayInput({
 }) {
   const [editing, setEditing] = useState(false);
   const essayLabels = getHandwritePartLabels(question);
+
+  useEffect(() => {
+    if (isSubmitted || isRevealed) {
+      setEditing(false);
+    }
+  }, [isSubmitted, isRevealed]);
 
   if (editing) {
     return (
@@ -2096,7 +2108,7 @@ function DraftOverlay({
   };
 
   const toolBtnClass =
-    "w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
+    "w-[42px] h-[42px] rounded-full flex items-center justify-center transition-all active:scale-[0.96]";
   const getToolBtnStyle = (
     active?: boolean,
     danger?: boolean,
@@ -2129,25 +2141,25 @@ function DraftOverlay({
               onPointerLeave={endStroke}
             />
           </div>
-          <div className="absolute right-[28px] top-[82px] z-40 flex items-center gap-[10px] rounded-[999px] bg-white px-[14px] py-[8px] border border-[#e7e9f8]">
+          <div className="absolute right-[28px] top-[82px] z-40 flex items-center gap-[8px] rounded-[999px] bg-white px-[12px] py-[6px] border border-[#e7e9f8]">
             <button type="button" onClick={handleUndo} disabled={!strokes.length} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length)}>
-              <Undo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+              <Undo2 className="w-[19px] h-[19px]" strokeWidth={1.8} />
             </button>
             <button type="button" onClick={handleRedo} disabled={!redoStrokes.length} className={toolBtnClass} style={getToolBtnStyle(!!redoStrokes.length, false, !redoStrokes.length)}>
-              <Redo2 className="w-[24px] h-[24px]" strokeWidth={1.8} />
+              <Redo2 className="w-[19px] h-[19px]" strokeWidth={1.8} />
             </button>
             <button type="button" onClick={() => setIsErasing(true)} className={toolBtnClass} style={getToolBtnStyle(isErasing)}>
-              <Eraser className="w-[22px] h-[22px]" strokeWidth={1.8} />
+              <Eraser className="w-[18px] h-[18px]" strokeWidth={1.8} />
             </button>
             <button type="button" onClick={() => setIsErasing(false)} className={toolBtnClass} style={getToolBtnStyle(!isErasing)}>
-              <PenLine className="w-[22px] h-[22px]" strokeWidth={1.8} />
+              <PenLine className="w-[18px] h-[18px]" strokeWidth={1.8} />
             </button>
             <button type="button" onClick={handleClear} disabled={!strokes.length && !baseImageRef.current} className={toolBtnClass} style={getToolBtnStyle(!!strokes.length, false, !strokes.length && !baseImageRef.current)}>
-              <Trash2 className="w-[22px] h-[22px]" strokeWidth={1.8} />
+              <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.8} />
             </button>
-            <div className="w-px h-[34px] bg-[#e4e7ff]" />
+            <div className="w-px h-[28px] bg-[#e4e7ff]" />
             <button type="button" onClick={onClose} className={toolBtnClass} style={getToolBtnStyle(false, true)}>
-              <X className="w-[22px] h-[22px]" strokeWidth={2} />
+              <X className="w-[18px] h-[18px]" strokeWidth={2} />
             </button>
             <button
               type="button"
@@ -2159,7 +2171,7 @@ function DraftOverlay({
                 boxShadow: "none",
               }}
             >
-              <Check className="w-[22px] h-[22px]" strokeWidth={2.2} />
+              <Check className="w-[18px] h-[18px]" strokeWidth={2.2} />
             </button>
           </div>
         </motion.div>
