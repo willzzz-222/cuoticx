@@ -16,6 +16,11 @@ import {
   Image as ImageIcon,
   Mic,
   Video,
+  MoreHorizontal,
+  Printer,
+  MessageSquareWarning,
+  FileX2,
+  ListChecks,
 } from "lucide-react";
 import imgGeometry from "figma:asset/6e109925589a4a403896cd2e02a844159083d75a.png";
 import { ResultScreen } from "./ResultScreen";
@@ -447,40 +452,57 @@ const OPTION_STYLES: Record<
 interface NavBarProps {
   currentIndex: number;
   total: number;
+  questionResults: {
+    id: number;
+    isCorrect: boolean;
+    isRevealed: boolean;
+    isSubmitted: boolean;
+  }[];
   onPrev: () => void;
   onNext: () => void;
   onBack: () => void;
   onDraft: () => void;
+  onJumpTo: (idx: number) => void;
 }
 
 function NavBar({
   currentIndex,
   total,
+  questionResults,
   onPrev,
   onNext,
   onBack,
   onDraft,
+  onJumpTo,
 }: NavBarProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen && !sheetOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (menuRef.current && target && !menuRef.current.contains(target)) {
+        setMenuOpen(false);
+      }
+      if (sheetRef.current && target && !sheetRef.current.contains(target)) {
+        setSheetOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen, sheetOpen]);
+
   return (
     <div className="absolute top-0 left-0 w-[1280px] h-[56px] bg-[#c5d3ff] flex items-center justify-between px-[30px]">
       <button
         onClick={onBack}
         className="flex items-center gap-[8px] cursor-pointer"
       >
-        <div className="w-[40px] h-[40px] relative">
-          <svg
-            className="absolute block"
-            style={{
-              left: "10.29px",
-              top: "11.62px",
-              width: "19.258px",
-              height: "17.428px",
-            }}
-            fill="none"
-            viewBox="0 0 19.258 17.4284"
-          >
-            <path d={svgPaths.p2cbb90f0} fill="#33347C" />
-          </svg>
+        <div className="w-[32px] h-[32px] rounded-[10px] bg-[#eef1ff] flex items-center justify-center">
+          <ChevronLeft className="w-[16px] h-[16px] text-[#4f5685]" strokeWidth={2.6} />
         </div>
         <span
           className="text-[#33347c] text-[24px]"
@@ -518,48 +540,108 @@ function NavBar({
       </div>
 
       <div className="flex items-center gap-[12px]">
+        <div className="relative" ref={sheetRef}>
+          <button
+            type="button"
+            onClick={() => setSheetOpen((v) => !v)}
+            className="flex items-center gap-[6px] text-[#7075ef] text-[15px] hover:opacity-75 transition-opacity"
+          >
+            <ListChecks className="w-[18px] h-[18px]" />
+            <span>答题卡</span>
+          </button>
+          {sheetOpen && (
+            <div className="absolute right-0 top-[34px] z-[130] w-[388px] rounded-[20px] border border-[#e5e7f7] bg-white px-[18px] py-[16px] shadow-[0_12px_28px_rgba(64,76,132,0.18)]">
+              <div className="flex items-center justify-between text-[16px] text-[#5d6488] mb-[12px]">
+                <span>共 {total} 题</span>
+                <span>当前第 {currentIndex + 1} 题</span>
+              </div>
+              <div className="flex items-center gap-[12px] text-[14px] text-[#7f86a8] mb-[12px]">
+                <span className="inline-flex items-center gap-[5px]"><i className="w-[11px] h-[11px] rounded-full bg-[#6d74f6] inline-block" />当前</span>
+                <span className="inline-flex items-center gap-[5px]"><i className="w-[11px] h-[11px] rounded-full bg-[#9bcc37] inline-block" />正确</span>
+                <span className="inline-flex items-center gap-[5px]"><i className="w-[11px] h-[11px] rounded-full bg-[#ffece8] inline-block border border-[#ffd7cf]" />错误</span>
+                <span className="inline-flex items-center gap-[5px]"><i className="w-[11px] h-[11px] rounded-full bg-[#eef1ff] inline-block border border-[#dbe0fb]" />未作答</span>
+              </div>
+              <div className="grid grid-cols-6 gap-[10px]">
+                {questionResults.map((r, idx) => {
+                  const isCurrent = idx === currentIndex;
+                  const isAnswered = r.isSubmitted || r.isRevealed;
+                  const bg = isCurrent
+                    ? "#6d74f6"
+                    : !isAnswered
+                      ? "#EEF1FF"
+                      : r.isCorrect
+                        ? "#9BCC37"
+                        : "#FFECE8";
+                  const color = isCurrent
+                    ? "#fff"
+                    : !isAnswered
+                      ? "#7D84A3"
+                      : r.isCorrect
+                        ? "#fff"
+                        : "#FF6A58";
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => {
+                        onJumpTo(idx);
+                        setSheetOpen(false);
+                      }}
+                      className="w-[40px] h-[40px] rounded-full text-[15px] font-[600] justify-self-center"
+                      style={{ background: bg, color }}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
         <button
           onClick={onDraft}
           className="flex items-center gap-[4px] text-[#7075ef] text-[15px] hover:opacity-75 transition-opacity"
         >
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 32 32"
-            fill="none"
-          >
-            <path d={svgPaths.p2a71dc00} fill="#7075EF" />
-          </svg>
+          <PencilLine className="w-[18px] h-[18px]" />
           <span>草稿</span>
         </button>
-        <div className="bg-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.8)] flex items-center gap-[6px] px-[14px] py-[6px] rounded-[36px] text-[#7075ef] text-[15px] cursor-pointer hover:bg-[rgba(255,255,255,0.6)] transition-all">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="bg-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.8)] w-[40px] h-[36px] flex items-center justify-center rounded-[36px] cursor-pointer hover:bg-[rgba(255,255,255,0.6)] transition-all"
+            aria-label="更多"
           >
-            <path
-              d={svgPaths.p149c0700}
-              stroke="#716EFF"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span>打印</span>
-        </div>
-        <div className="bg-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.8)] w-[40px] h-[36px] flex items-center justify-center rounded-[36px] cursor-pointer hover:bg-[rgba(255,255,255,0.6)] transition-all">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <path d={svgPaths.p4279900} fill="#7075EF" />
-            <path d={svgPaths.p11e47970} fill="#7075EF" />
-            <path d={svgPaths.p9ec6c80} fill="#7075EF" />
-          </svg>
+            <MoreHorizontal className="w-[20px] h-[20px] text-[#7075ef]" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-[44px] z-[120] w-[238px] rounded-[24px] bg-[#f3f3f4] border border-[#e6e6e7] px-[16px] py-[10px] shadow-[0_8px_20px_rgba(74,85,140,0.16)]">
+              <button
+                type="button"
+                className="w-full h-[52px] flex items-center gap-[12px] text-[#4a4a4a] hover:opacity-80 transition-opacity"
+                onClick={() => setMenuOpen(false)}
+              >
+                <Printer className="w-[22px] h-[22px] text-[#9aa1ad] shrink-0" />
+                <span className="text-[18px] leading-[1] whitespace-nowrap">打印</span>
+              </button>
+              <button
+                type="button"
+                className="w-full h-[52px] flex items-center gap-[12px] text-[#4a4a4a] hover:opacity-80 transition-opacity"
+                onClick={() => setMenuOpen(false)}
+              >
+                <MessageSquareWarning className="w-[22px] h-[22px] text-[#9aa1ad] shrink-0" />
+                <span className="text-[18px] leading-[1] whitespace-nowrap">问题反馈</span>
+              </button>
+              <button
+                type="button"
+                className="w-full h-[52px] flex items-center gap-[12px] text-[#4a4a4a] hover:opacity-80 transition-opacity"
+                onClick={() => setMenuOpen(false)}
+              >
+                <FileX2 className="w-[22px] h-[22px] text-[#9aa1ad] shrink-0" />
+                <span className="text-[18px] leading-[1] whitespace-nowrap">本次移除</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -2181,7 +2263,11 @@ function DraftOverlay({
 }
 
 // ============ MAIN COMPONENT ============
-export function WrongQuestionReview() {
+export function WrongQuestionReview({
+  onExitToHome,
+}: {
+  onExitToHome?: () => void;
+} = {}) {
   const [viewMode, setViewMode] = useState<
     "quiz" | "result" | "wrongDetail"
   >("quiz");
@@ -2439,20 +2525,8 @@ export function WrongQuestionReview() {
             onClick={() => setViewMode("result")}
             className="flex items-center gap-[8px] cursor-pointer"
           >
-            <div className="w-[40px] h-[40px] relative">
-              <svg
-                className="absolute block"
-                style={{
-                  left: "10.29px",
-                  top: "11.62px",
-                  width: "19.258px",
-                  height: "17.428px",
-                }}
-                fill="none"
-                viewBox="0 0 19.258 17.4284"
-              >
-                <path d={svgPaths.p2cbb90f0} fill="#33347C" />
-              </svg>
+            <div className="w-[32px] h-[32px] rounded-[10px] bg-[#eef1ff] flex items-center justify-center">
+              <ChevronLeft className="w-[16px] h-[16px] text-[#4f5685]" strokeWidth={2.6} />
             </div>
             <span
               className="text-[#33347c] text-[24px]"
@@ -2585,10 +2659,18 @@ export function WrongQuestionReview() {
       <NavBar
         currentIndex={currentIndex}
         total={QUESTIONS.length}
+        questionResults={questionResults}
         onPrev={handlePrev}
         onNext={handleNext}
-        onBack={() => setViewMode("result")}
+        onBack={() => {
+          if (onExitToHome) {
+            onExitToHome();
+            return;
+          }
+          setViewMode("result");
+        }}
         onDraft={() => setShowDraft(true)}
+        onJumpTo={(idx) => setCurrentIndex(idx)}
       />
       <div className="absolute left-[24px] top-[72px] w-[1232px] h-[712px] flex gap-[8px]">
         <QuestionPanel
