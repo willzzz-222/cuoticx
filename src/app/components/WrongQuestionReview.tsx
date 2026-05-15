@@ -95,12 +95,12 @@ const QUESTIONS: Question[] = [
   {
     id: 4,
     type: "fill",
-    content: "计算并填写结果。",
-    blanksCount: 3,
-    blanksLabels: ["1", "2", "3"],
-    correctAnswer: ["312", "103", "191"],
-    answerText: "1=312，2=103，3=191",
-    analysisText: "按顺序完成三道计算并核对结果。",
+    content: "计算并填写结果：125×8=（1），468÷6=（2），17×19=（3），405-198=（4）。",
+    blanksCount: 4,
+    blanksLabels: ["1", "2", "3", "4"],
+    correctAnswer: ["1000", "78", "323", "207"],
+    answerText: "1=1000，2=78，3=323，4=207",
+    analysisText: "按顺序计算四道题，注意先乘除后加减与竖式验算。",
     subject: "数学 · 计算",
     difficulty: "中等",
   },
@@ -181,12 +181,12 @@ const QUESTIONS: Question[] = [
   {
     id: 11,
     type: "fill",
-    content: "填空：半径为 r 的圆，面积是（1），周长是（2）。",
-    blanksCount: 2,
-    blanksLabels: ["1", "2"],
-    correctAnswer: ["πr²", "2πr"],
-    answerText: "1=πr²，2=2πr",
-    analysisText: "直接应用圆的面积和周长公式。",
+    content: "填空：半径为 r 的圆，面积是（1），周长是（2）；直径为 d 的圆，周长是（3）；已知周长 C，半径是（4）。",
+    blanksCount: 4,
+    blanksLabels: ["1", "2", "3", "4"],
+    correctAnswer: ["πr²", "2πr", "πd", "C/(2π)"],
+    answerText: "1=πr²，2=2πr，3=πd，4=C/(2π)",
+    analysisText: "同一组圆的公式变形：S=πr²，C=2πr=πd，r=C/(2π)。",
     subject: "数学 · 圆",
     difficulty: "简单",
   },
@@ -204,6 +204,45 @@ const QUESTIONS: Question[] = [
     answerText: "A、B",
     analysisText: "√2 和 π 不能表示成两个整数之比，属于无理数。",
     subject: "数学 · 实数",
+    difficulty: "中等",
+  },
+  {
+    id: 13,
+    type: "single",
+    content: "某班男生 18 人，女生 22 人。男生人数占全班人数的几分之几？",
+    options: [
+      { label: "A", content: "9/20" },
+      { label: "B", content: "11/20" },
+      { label: "C", content: "18/22" },
+      { label: "D", content: "20/9" },
+    ],
+    correctAnswer: "A",
+    answerText: "A",
+    analysisText: "全班 40 人，男生占比 18/40=9/20。",
+    subject: "数学 · 分数应用",
+    difficulty: "简单",
+  },
+  {
+    id: 14,
+    type: "fill",
+    content: "阅读统计图后填空：本周一到周五某店销量分别为 28、35、31、40、36 件。填空：（1）最高销量是（ ）件；（2）最低销量是（ ）件；（3）平均销量是（ ）件；（4）周四比周一多（ ）件；（5）周五比周二多（ ）件。",
+    blanksCount: 5,
+    blanksLabels: ["1", "2", "3", "4", "5"],
+    correctAnswer: ["40", "28", "34", "12", "1"],
+    answerText: "1=40，2=28，3=34，4=12，5=1",
+    analysisText: "最大值 40，最小值 28；平均值 (28+35+31+40+36)/5=34；差值分别为 12 和 1。",
+    subject: "数学 · 统计",
+    difficulty: "中等",
+  },
+  {
+    id: 15,
+    type: "essay",
+    content: "解答题：已知一次函数 y=2x+1。\n(1) 当 x=3 时，求 y；\n(2) 求该函数与 y 轴交点坐标；\n(3) 判断点 A(2,6) 是否在该函数图像上，并说明理由。",
+    blanksLabels: ["1", "2", "3"],
+    correctAnswer: ["7", "(0,1)", "不在"],
+    answerText: "(1) y=7；(2) 交点为(0,1)；(3) 点A不在图像上。",
+    analysisText: "(1) 代入 x=3，y=2×3+1=7；(2) x=0 时 y=1，所以与 y 轴交点为(0,1)；(3) x=2 代入得 y=5，不等于6，因此点A不在该图像上。",
+    subject: "数学 · 函数解答",
     difficulty: "中等",
   },
 ];
@@ -450,6 +489,7 @@ const OPTION_STYLES: Record<
 
 // ============ NAV BAR ============
 interface NavBarProps {
+  title?: string;
   currentIndex: number;
   total: number;
   questionResults: {
@@ -463,9 +503,12 @@ interface NavBarProps {
   onBack: () => void;
   onDraft: () => void;
   onJumpTo: (idx: number) => void;
+  onSubmitFromCard: () => void;
+  showCardSubmit?: boolean;
 }
 
 function NavBar({
+  title = "错题重刷",
   currentIndex,
   total,
   questionResults,
@@ -474,6 +517,8 @@ function NavBar({
   onBack,
   onDraft,
   onJumpTo,
+  onSubmitFromCard,
+  showCardSubmit = true,
 }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -508,7 +553,7 @@ function NavBar({
           className="text-[#33347c] text-[24px]"
           style={{ fontWeight: 600 }}
         >
-          错题重刷
+          {title}
         </span>
       </button>
 
@@ -595,6 +640,20 @@ function NavBar({
                   );
                 })}
               </div>
+              {showCardSubmit && (
+                <div className="mt-[14px] flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSheetOpen(false);
+                      onSubmitFromCard();
+                    }}
+                    className="h-[34px] px-[16px] rounded-[18px] bg-[#6d74f6] text-white text-[14px] font-[600] hover:opacity-90 transition-opacity"
+                  >
+                    提交
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1130,6 +1189,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
   const showErrorCause =
     showResult &&
     (isRevealed || (isHandwriteQuestion ? hasWrongJudge : isObjectiveWrong));
+  const showReviewFooter = showResult && showConfirmButton;
 
   return (
     <div
@@ -1180,6 +1240,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
             fillBlanks={fillBlanks}
             isSubmitted={isSubmitted}
             isRevealed={isRevealed}
+            hideJudgeControls={showConfirmButton}
             manualJudges={manualJudges}
             onManualJudge={onManualJudge}
             onChange={onFillBlank}
@@ -1191,6 +1252,7 @@ function AnswerPanelV3(props: AnswerPanelProps) {
             fillBlanks={[essayText]}
             isSubmitted={isSubmitted}
             isRevealed={isRevealed}
+            hideJudgeControls={showConfirmButton}
             manualJudges={manualJudges}
             onManualJudge={onManualJudge}
             onChange={(_, val) => onEssayChange(val)}
@@ -1220,6 +1282,60 @@ function AnswerPanelV3(props: AnswerPanelProps) {
             >
               提交
             </button>
+          </div>
+        ) : showReviewFooter ? (
+          <div className="flex items-center justify-end gap-[24px]">
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: confirmed ? 1 : 0.6 }}
+              onClick={onConfirm}
+              className="flex items-center gap-[4px] h-[46px] px-[32px] rounded-[90px] text-[16px] transition-all"
+              style={{
+                background: confirmed ? "#f0fff4" : "white",
+                border: confirmed
+                  ? "1px solid #52c41a"
+                  : "1px solid #f2f3f5",
+                color: confirmed ? "#389e0d" : "#bdbdbd",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path
+                  d={svgPaths2.p1874e200}
+                  stroke={confirmed ? "#389e0d" : "#BDBDBD"}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.35"
+                />
+              </svg>
+              确认掌握
+            </motion.button>
+            {isLast ? (
+              <button
+                onClick={onFinish}
+                className="flex items-center gap-[10px] px-[32px] py-[12px] rounded-[9999px] text-white text-[16px]"
+                style={{
+                  background: "#7075ef",
+                  boxShadow:
+                    "0px 4px 3px #c7d2fe, 0px 10px 7.5px #c7d2fe",
+                }}
+              >
+                <Star className="w-[16px] h-[16px]" />
+                完成练习
+              </button>
+            ) : (
+              <button
+                onClick={onNext}
+                className="px-[32px] py-[12px] rounded-[9999px] text-white text-[16px]"
+                style={{
+                  background: "#7075ef",
+                  boxShadow:
+                    "0px 4px 3px #c7d2fe, 0px 10px 7.5px #c7d2fe",
+                  minWidth: "112px",
+                }}
+              >
+                下一题
+              </button>
+            )}
           </div>
         ) : isHandwriteQuestion ? (
           <div className="flex items-center justify-end gap-[16px]">
@@ -1833,6 +1949,7 @@ function FillBlankInputs({
   fillBlanks,
   isSubmitted,
   isRevealed,
+  hideJudgeControls = false,
   manualJudges,
   onManualJudge,
   onChange,
@@ -1841,13 +1958,17 @@ function FillBlankInputs({
   fillBlanks: string[];
   isSubmitted: boolean;
   isRevealed: boolean;
+  hideJudgeControls?: boolean;
   manualJudges?: Record<number, "correct" | "wrong">;
   onManualJudge?: (idx: number, value: "correct" | "wrong") => void;
   onChange: (idx: number, val: string) => void;
 }) {
   const labels = getHandwritePartLabels(question);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const showJudge = isSubmitted || isRevealed;
+  const [pendingScrollIdx, setPendingScrollIdx] = useState<number | null>(null);
+  const scrollWrapRef = useRef<HTMLDivElement | null>(null);
+  const rowRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const showJudge = (isSubmitted || isRevealed) && !hideJudgeControls;
 
   useEffect(() => {
     if (isSubmitted || isRevealed) {
@@ -1855,17 +1976,38 @@ function FillBlankInputs({
     }
   }, [isSubmitted, isRevealed]);
 
+  useEffect(() => {
+    if (editingIdx !== null || pendingScrollIdx === null) return;
+    const timer = window.setTimeout(() => {
+      const wrap = scrollWrapRef.current;
+      const row = rowRefs.current[pendingScrollIdx];
+      if (wrap && row) {
+        const targetTop = Math.max(0, row.offsetTop - wrap.clientHeight * 0.28);
+        wrap.scrollTo({ top: targetTop, behavior: "smooth" });
+      }
+      setPendingScrollIdx(null);
+    }, 30);
+    return () => window.clearTimeout(timer);
+  }, [editingIdx, pendingScrollIdx]);
+
   if (editingIdx !== null) {
     return (
       <div className="h-full min-h-[560px]">
         <HandwriteBoard
+          key={`handwrite-${question.id}-${editingIdx}`}
           open
           title={`第 ${labels[editingIdx]} 题`}
           guideLabels={[labels[editingIdx]]}
           initialImage={fillBlanks[editingIdx] || ""}
           onClose={() => setEditingIdx(null)}
           onConfirm={(img) => {
+            const nextIdx =
+              editingIdx < labels.length - 1 ? editingIdx + 1 : null;
             onChange(editingIdx, img);
+            if (nextIdx !== null) {
+              setEditingIdx(nextIdx);
+              return;
+            }
             setEditingIdx(null);
           }}
         />
@@ -1874,13 +2016,16 @@ function FillBlankInputs({
   }
 
   return (
-    <div className="flex flex-col mt-[8px] rounded-[20px] overflow-hidden bg-white">
+    <div ref={scrollWrapRef} className="flex flex-col mt-[8px] rounded-[20px] overflow-hidden bg-white">
       {labels.map((label, idx) => {
         const val = fillBlanks[idx] || "";
         const judge = manualJudges?.[idx];
         return (
           <div
             key={idx}
+            ref={(el) => {
+              rowRefs.current[idx] = el;
+            }}
             className="flex items-stretch gap-[18px] px-[18px] py-[18px]"
             style={{
               borderTop: idx === 0 ? "none" : "1px solid #eceef8",
@@ -2299,6 +2444,8 @@ export function WrongQuestionReview({
   >({});
   const [showDraft, setShowDraft] = useState(false);
   const [draftMap, setDraftMap] = useState<Record<number, string>>({});
+  const [showUnansweredConfirm, setShowUnansweredConfirm] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // ---- Derived ----
   const question = QUESTIONS[currentIndex];
@@ -2357,7 +2504,7 @@ export function WrongQuestionReview({
   // Wrong questions list
   const wrongQuestions = QUESTIONS.filter((q, idx) => {
     const r = questionResults[idx];
-    return r.isSubmitted && (!r.isCorrect || r.isRevealed);
+    return !r.isSubmitted || !r.isCorrect || r.isRevealed;
   });
 
   const wrongDetailQuestion =
@@ -2446,7 +2593,7 @@ export function WrongQuestionReview({
       setCurrentIndex((idx) =>
         idx < QUESTIONS.length - 1 ? idx + 1 : idx,
       );
-    }, 420);
+    }, 1000);
   };
   const handleReveal = () => {
     const revealJudges = Object.fromEntries(
@@ -2477,6 +2624,16 @@ export function WrongQuestionReview({
     if (!isLast) setCurrentIndex(currentIndex + 1);
   };
   const handleFinish = () => setViewMode("result");
+  const hasUnanswered = questionResults.some(
+    (r) => !r.isSubmitted && !r.isRevealed,
+  );
+  const handleSubmitFromCard = () => {
+    if (hasUnanswered) {
+      setShowUnansweredConfirm(true);
+      return;
+    }
+    handleFinish();
+  };
 
   // ---- Result screen ----
   if (viewMode === "result") {
@@ -2499,7 +2656,13 @@ export function WrongQuestionReview({
           setWrongDetailIdx(0);
           setViewMode("wrongDetail");
         }}
-        onBack={() => setViewMode("quiz")}
+        onBack={() => {
+          if (onExitToHome) {
+            onExitToHome();
+            return;
+          }
+          setViewMode("quiz");
+        }}
       />
     );
   }
@@ -2507,8 +2670,11 @@ export function WrongQuestionReview({
   // ---- Wrong detail view ----
   if (viewMode === "wrongDetail" && wrongDetailQuestion) {
     const wdQ = wrongDetailQuestion;
-    const wdSubmitted = submitted[wdQ.id] || false;
-    const wdRevealed = revealed[wdQ.id] || false;
+    const wdOriginalSubmitted = submitted[wdQ.id] || false;
+    const wdOriginalRevealed = revealed[wdQ.id] || false;
+    const wdIsUnanswered = !wdOriginalSubmitted && !wdOriginalRevealed;
+    const wdSubmitted = wdOriginalSubmitted || wdIsUnanswered;
+    const wdRevealed = wdOriginalRevealed || wdIsUnanswered;
     const wdAnswer = answers[wdQ.id];
     const wdBlanks =
       fillBlanksMap[wdQ.id] ||
@@ -2519,65 +2685,32 @@ export function WrongQuestionReview({
 
     return (
       <div className="w-[1280px] h-[800px] bg-[#e3e9ff] relative overflow-hidden">
-        {/* Wrong-detail nav */}
-        <div className="absolute top-0 left-0 w-[1280px] h-[56px] bg-[#c5d3ff] flex items-center justify-between px-[30px]">
-          <button
-            onClick={() => setViewMode("result")}
-            className="flex items-center gap-[8px] cursor-pointer"
-          >
-            <div className="w-[32px] h-[32px] rounded-[10px] bg-[#eef1ff] flex items-center justify-center">
-              <ChevronLeft className="w-[16px] h-[16px] text-[#4f5685]" strokeWidth={2.6} />
-            </div>
-            <span
-              className="text-[#33347c] text-[24px]"
-              style={{ fontWeight: 600 }}
-            >
-              错题解析
-            </span>
-          </button>
-
-          <div className="bg-[#f4f4ff] flex items-center gap-[12px] h-[40px] px-[16px] rounded-[9999px]">
-            <button
-              onClick={() =>
-                setWrongDetailIdx((i) => Math.max(0, i - 1))
-              }
-              disabled={wrongDetailIdx === 0}
-              className="w-[32px] h-[32px] flex items-center justify-center rounded-full hover:bg-[#e8e9ff] disabled:opacity-40 transition-all"
-            >
-              <ChevronLeft className="w-[18px] h-[18px] text-[#606266]" />
-            </button>
-            <div
-              className="flex items-center gap-[4px] text-[18px]"
-              style={{ fontWeight: 600 }}
-            >
-              <span className="text-[#ff5c5c]">
-                {wrongDetailIdx + 1}
-              </span>
-              <span className="text-[#a8abb2]">/</span>
-              <span className="text-[#a8abb2]">
-                {wrongQuestions.length}
-              </span>
-            </div>
-            <button
-              onClick={() =>
-                setWrongDetailIdx((i) =>
-                  Math.min(wrongQuestions.length - 1, i + 1),
-                )
-              }
-              disabled={wrongDetailIsLast}
-              className="w-[32px] h-[32px] flex items-center justify-center rounded-full hover:bg-[#e8e9ff] disabled:opacity-40 transition-all"
-            >
-              <ChevronRight className="w-[18px] h-[18px] text-[#606266]" />
-            </button>
-          </div>
-
-          <button
-            onClick={() => setViewMode("result")}
-            className="bg-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.8)] px-[20px] h-[36px] rounded-[36px] text-[#7075ef] text-[15px] hover:bg-[rgba(255,255,255,0.6)] transition-all"
-          >
-            返回结果
-          </button>
-        </div>
+        <NavBar
+          title="错题解析"
+          currentIndex={wrongDetailIdx}
+          total={wrongQuestions.length}
+          questionResults={wrongQuestions.map((q, idx) => {
+            const r = questionResults[QUESTIONS.indexOf(q)];
+            return {
+              id: q.id,
+              index: idx,
+              isCorrect: r?.isCorrect ?? false,
+              isRevealed: r?.isRevealed ?? false,
+              isSubmitted: r?.isSubmitted ?? false,
+            };
+          })}
+          onPrev={() => setWrongDetailIdx((i) => Math.max(0, i - 1))}
+          onNext={() =>
+            setWrongDetailIdx((i) =>
+              Math.min(wrongQuestions.length - 1, i + 1),
+            )
+          }
+          onBack={() => setViewMode("result")}
+          onDraft={() => setShowDraft(true)}
+          onJumpTo={(idx) => setWrongDetailIdx(idx)}
+          onSubmitFromCard={() => {}}
+          showCardSubmit={false}
+        />
 
         <div className="absolute left-[24px] top-[72px] w-[1232px] h-[712px] flex gap-[8px]">
           <QuestionPanel
@@ -2662,15 +2795,10 @@ export function WrongQuestionReview({
         questionResults={questionResults}
         onPrev={handlePrev}
         onNext={handleNext}
-        onBack={() => {
-          if (onExitToHome) {
-            onExitToHome();
-            return;
-          }
-          setViewMode("result");
-        }}
+        onBack={() => setShowExitConfirm(true)}
         onDraft={() => setShowDraft(true)}
         onJumpTo={(idx) => setCurrentIndex(idx)}
+        onSubmitFromCard={handleSubmitFromCard}
       />
       <div className="absolute left-[24px] top-[72px] w-[1232px] h-[712px] flex gap-[8px]">
         <QuestionPanel
@@ -2725,6 +2853,104 @@ export function WrongQuestionReview({
           }))
         }
       />
+      <AnimatePresence>
+        {showUnansweredConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[220] flex items-center justify-center"
+          >
+            <div
+              className="absolute inset-0 bg-black/35"
+              onClick={() => setShowUnansweredConfirm(false)}
+            />
+            <motion.div
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 8, opacity: 0 }}
+              className="relative w-[420px] rounded-[18px] bg-white border border-[#e9ecfb] p-[18px]"
+            >
+              <div className="text-[18px] text-[#2f3558] font-[600]">
+                提交确认
+              </div>
+              <div className="mt-[10px] text-[15px] leading-[1.5] text-[#5f668a]">
+                当前还有题目未完成作答，确认提交吗？
+              </div>
+              <div className="mt-[16px] flex justify-end gap-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setShowUnansweredConfirm(false)}
+                  className="h-[34px] px-[14px] rounded-[17px] border border-[#d8def8] text-[#6b7296] text-[14px]"
+                >
+                  继续作答
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnansweredConfirm(false);
+                    handleFinish();
+                  }}
+                  className="h-[34px] px-[14px] rounded-[17px] bg-[#6d74f6] text-white text-[14px]"
+                >
+                  确认提交
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showExitConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[230] flex items-center justify-center"
+          >
+            <div
+              className="absolute inset-0 bg-black/35"
+              onClick={() => setShowExitConfirm(false)}
+            />
+            <motion.div
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 8, opacity: 0 }}
+              className="relative w-[420px] rounded-[18px] bg-white border border-[#e9ecfb] p-[18px]"
+            >
+              <div className="text-[18px] text-[#2f3558] font-[600]">
+                提示
+              </div>
+              <div className="mt-[10px] text-[15px] leading-[1.5] text-[#5f668a]">
+                将返回错题本，是否保存作答记录？
+              </div>
+              <div className="mt-[16px] flex justify-end gap-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setShowExitConfirm(false)}
+                  className="h-[34px] px-[14px] rounded-[17px] border border-[#d8def8] text-[#6b7296] text-[14px]"
+                >
+                  继续作答
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowExitConfirm(false);
+                    if (onExitToHome) {
+                      onExitToHome();
+                      return;
+                    }
+                    setViewMode("result");
+                  }}
+                  className="h-[34px] px-[14px] rounded-[17px] bg-[#6d74f6] text-white text-[14px]"
+                >
+                  保存并返回
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

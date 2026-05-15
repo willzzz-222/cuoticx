@@ -69,6 +69,7 @@ function SemiGauge({ correct, total }: { correct: number; total: number }) {
 export function ResultScreen({ questions, questionResults, onGoToQuestion, onWrongDetail, onBack }: ResultScreenProps) {
   const correctCount = questionResults.filter((r) => r.isCorrect).length;
   const wrongCount = questionResults.filter((r) => r.isSubmitted && !r.isCorrect).length;
+  const unansweredCount = questionResults.filter((r) => !r.isSubmitted && !r.isRevealed).length;
   const total = questions.length;
   const submitAtRef = useRef(new Date());
 
@@ -155,6 +156,10 @@ export function ResultScreen({ questions, questionResults, onGoToQuestion, onWro
                 <div className="text-[#ea6a68] text-[32px]" style={{ fontWeight: 700 }}>{wrongCount}题</div>
               </div>
               <div className="text-center flex-1">
+                <div className="text-[#9b9fc2] text-[14px]">未答</div>
+                <div className="text-[#8f96ad] text-[32px]" style={{ fontWeight: 700 }}>{unansweredCount}题</div>
+              </div>
+              <div className="text-center flex-1">
                 <div className="text-[#9b9fc2] text-[14px]">总用时</div>
                 <div className="text-[#6075e5] text-[32px]" style={{ fontWeight: 700 }}>{totalMinutes}</div>
               </div>
@@ -171,7 +176,9 @@ export function ResultScreen({ questions, questionResults, onGoToQuestion, onWro
                   <div className="text-[#2f3340] text-[18px]" style={{ fontWeight: 700 }}>核心诊断</div>
                 </div>
                 <p className="text-[#606266] text-[15px] leading-[1.6] mt-[4px]">
-                  {wrongCount === 0 ? '本次练习全部答对，知识掌握稳定，继续保持。' : `本次主要失分在 ${wrongCount} 道题，建议优先回看错题的核心步骤与概念。`}
+                  {wrongCount === 0 && unansweredCount === 0
+                    ? '本次练习全部答对，知识掌握稳定，继续保持。'
+                    : `本次主要失分在 ${wrongCount} 道题，未作答 ${unansweredCount} 道，建议优先回看错题并补齐未答题目。`}
                 </p>
               </div>
 
